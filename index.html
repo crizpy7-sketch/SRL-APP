@@ -4,49 +4,21 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GCS Buildings - SRL Log</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://unpkg.com/lucide-react@0.383.0/dist/umd/lucide-react.min.js"></script>
-  <style>*{box-sizing:border-box;margin:0;padding:0}body{background:#16181D}@keyframes spin{to{transform:rotate(360deg)}}</style>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{background:#16181D}</style>
 </head>
 <body>
   <div id="root"></div>
   <script type="text/babel">
-
-    // ════════════════════════════════════════════════════════
-    // ⚙️ SETUP — paste your Supabase values here (2 lines only)
-    // Find them at: supabase.com → your project → Settings → API
-    // ════════════════════════════════════════════════════════
-    const SUPA_URL = "https://bjnkgxkcbbnbtazelsjs.supabase.co";
-    const SUPA_KEY = "sb_publishable_F49fzNl_CTWUdJy5ZdMDMw_MFrIOXw-";
-    // ════════════════════════════════════════════════════════
-
-    const CONFIGURED = !SUPA_URL.includes("PASTE");
-    const H = { "apikey": SUPA_KEY, "Authorization": "Bearer " + SUPA_KEY, "Content-Type": "application/json" };
-
-    async function dbGet(id) {
-      if (!CONFIGURED) return null;
-      const r = await fetch(SUPA_URL + "/rest/v1/app_state?id=eq." + id + "&select=data", { headers: H });
-      if (!r.ok) throw new Error("db");
-      const j = await r.json();
-      return j[0] ? j[0].data : null;
-    }
-    async function dbSet(id, data) {
-      if (!CONFIGURED) return;
-      const r = await fetch(SUPA_URL + "/rest/v1/app_state", {
-        method: "POST",
-        headers: { ...H, "Prefer": "resolution=merge-duplicates" },
-        body: JSON.stringify({ id, data })
-      });
-      if (!r.ok) throw new Error("db");
-    }
-
     const { useState, useEffect, useRef } = React;
-    const { LogOut, ChevronRight, Lock, HardHat, CheckCircle2, X, Camera, Paperclip, FileText, MapPin, Printer, LayoutDashboard, PackagePlus, ListChecks, Search, Truck, Warehouse, ArrowDownToLine, ArrowUpFromLine, Activity, Boxes, User, RefreshCw } = LucideReact;
+    const { LogOut, ChevronRight, Lock, HardHat, CheckCircle2, X, Camera, Paperclip, FileText, Eye, MapPin, Printer } = LucideReact;
 
-    const C = { ink:"#16181D", inkSoft:"#1F232B", line:"#2B3038", paper:"#F4F3EF", card:"#FFF", border:"#E4E2DB", text:"#21242B", muted:"#6B7280", accent:"#E8910C", accentSoft:"#FBEFD7" };
+    const C = { ink:"#16181D", inkSoft:"#1F232B", line:"#2B3038", paper:"#F4F3EF", card:"#FFF", border:"#E4E2DB", text:"#21242B", muted:"#6B7280", accent:"#E8910C" };
     const sf = { fontFamily:"'IBM Plex Sans',sans-serif" };
     const mf = { fontFamily:"'IBM Plex Mono',monospace" };
     const df = { fontFamily:"'Saira Condensed',sans-serif" };
@@ -61,30 +33,13 @@
       { name:"Manuel Morales",  role:"General Foreman",   building:"GCS-B", code:"5555" },
     ];
 
-    const inp = { ...sf, background:"#FBFAF7", border:"1px solid "+C.border, color:C.text, borderRadius:8, padding:"10px 14px", fontSize:15, width:"100%", outline:"none", boxSizing:"border-box" };
-    const btnS = (bg,fg) => ({ ...sf, background:bg, color:fg, border:"none", borderRadius:8, padding:"12px 16px", fontWeight:700, fontSize:15, cursor:"pointer", width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8 });
-    const lbl = { ...sf, color:C.muted, fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:0.5, marginBottom:6 };
+    const inp = { ...sf, background:"#FBFAF7", border:`1px solid ${C.border}`, color:C.text, borderRadius:8, padding:"10px 14px", fontSize:15, width:"100%", outline:"none", boxSizing:"border-box" };
+    const btnStyle = (bg,fg) => ({ ...sf, background:bg, color:fg, border:"none", borderRadius:8, padding:"12px 16px", fontWeight:700, fontSize:15, cursor:"pointer", width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:8 });
 
     function Badge({ status }) {
-      const map = { installed:{l:"Installed",bg:"#E7F4EC",fg:"#1B7A43",dot:"#22A35A"}, removed:{l:"Removed",bg:"#FBEAEA",fg:"#B23030",dot:"#D14343"}, "pmi-received":{l:"PMI In",bg:"#E8F0FB",fg:"#1F5FB0",dot:"#2C76D1"}, "pmi-returned":{l:"PMI Out",bg:"#F1ECF9",fg:"#6A45A8",dot:"#8A5BD0"} };
-      const s = map[status]||{l:status,bg:"#EEE",fg:"#444",dot:"#999"};
-      return (
-        <span style={{ ...sf, background:s.bg, color:s.fg, borderRadius:99, padding:"3px 10px", fontSize:11, fontWeight:700, display:"inline-flex", alignItems:"center", gap:5, whiteSpace:"nowrap" }}>
-          <span style={{ width:6, height:6, borderRadius:99, background:s.dot }}/>{s.l}
-        </span>
-      );
-    }
-
-    function SectionHead({ icon:Icon, color, bg, title, right }) {
-      return (
-        <div style={{ padding:"12px 16px", borderBottom:"1px solid "+C.border, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:30, height:30, borderRadius:8, background:bg, display:"grid", placeItems:"center" }}><Icon size={16} color={color}/></div>
-            <span style={{ ...sf, fontWeight:600 }}>{title}</span>
-          </div>
-          {right}
-        </div>
-      );
+      const map = { installed:{l:"Installed",bg:"#E7F4EC",fg:"#1B7A43"}, removed:{l:"Removed",bg:"#FBEAEA",fg:"#B23030"}, "pmi-received":{l:"PMI In",bg:"#E8F0FB",fg:"#1F5FB0"}, "pmi-returned":{l:"PMI Out",bg:"#F1ECF9",fg:"#6A45A8"} };
+      const s = map[status]||{l:status,bg:"#EEE",fg:"#444"};
+      return <span style={{ ...sf, background:s.bg, color:s.fg, borderRadius:99, padding:"2px 10px", fontSize:11, fontWeight:700 }}>{s.l}</span>;
     }
 
     function PinPad({ label, code, onOk, onBack }) {
@@ -101,7 +56,7 @@
               <div style={{ background:C.accent, borderRadius:10, width:44, height:44, display:"grid", placeItems:"center" }}><Lock size={22} color={C.ink}/></div>
               <div><div style={{ ...df, color:"#fff", fontSize:22, fontWeight:700 }}>Enter Code</div><div style={{ ...mf, color:"#7E8794", fontSize:11 }}>{label}</div></div>
             </div>
-            <div style={{ background:C.inkSoft, borderRadius:12, padding:20, border:"1px solid "+C.line }}>
+            <div style={{ background:C.inkSoft, borderRadius:12, padding:20, border:`1px solid ${C.line}` }}>
               <div style={{ display:"flex", justifyContent:"center", gap:12, marginBottom:20 }}>
                 {[0,1,2,3].map(i=><div key={i} style={{ width:14, height:14, borderRadius:99, background:i<pin.length?C.accent:C.line }}/>)}
               </div>
@@ -109,7 +64,7 @@
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
                 {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((k,i)=>(
                   <button key={i} onClick={()=>k==="⌫"?setPin(p=>p.slice(0,-1)):k!==""&&press(String(k))}
-                    style={{ ...df, background:k===""?"transparent":C.inkSoft, color:"#E6E8EC", border:k===""?"none":"1px solid "+C.line, borderRadius:10, padding:"14px 0", fontSize:20, fontWeight:700, cursor:"pointer" }}>
+                    style={{ ...df, background:k===""?"transparent":C.inkSoft, color:"#E6E8EC", border:k===""?"none":`1px solid ${C.line}`, borderRadius:10, padding:"14px 0", fontSize:20, fontWeight:700, cursor:"pointer" }}>
                     {k}
                   </button>
                 ))}
@@ -121,34 +76,11 @@
       );
     }
 
-    const compressImage = (file) => new Promise((res) => {
-      const r = new FileReader();
-      r.onload = e => {
-        const img = new Image();
-        img.onload = () => {
-          const cv = document.createElement("canvas");
-          const sc = Math.min(1, 800/Math.max(img.width,img.height));
-          cv.width = Math.round(img.width*sc); cv.height = Math.round(img.height*sc);
-          cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
-          res(cv.toDataURL("image/jpeg",0.6));
-        };
-        img.src = e.target.result;
-      };
-      r.readAsDataURL(file);
-    });
-
     function FileUploader({ files, setFiles }) {
       const imgRef = useRef(); const fileRef = useRef();
       const [preview, setPreview] = useState(null);
       const MAX = 5;
-      const addImages = async fs => {
-        for (const f of Array.from(fs).slice(0,MAX-files.length)) {
-          const data = await compressImage(f);
-          setFiles(p => p.length<MAX?[...p,{name:f.name,type:"image/jpeg",data}]:p);
-        }
-      };
-      const addFiles = fs => Array.from(fs).slice(0,MAX-files.length).forEach(f => {
-        if(f.size > 1500000) return;
+      const add = fs => Array.from(fs).slice(0,MAX-files.length).forEach(f => {
         const r = new FileReader(); r.onload = e => setFiles(p => p.length<MAX?[...p,{name:f.name,type:f.type,data:e.target.result}]:p); r.readAsDataURL(f);
       });
       return (
@@ -164,122 +96,96 @@
             </button>
             <span style={{ ...sf, color:C.muted, fontSize:12, marginLeft:"auto" }}>{files.length}/{MAX}</span>
           </div>
-          <input ref={imgRef} type="file" accept="image/*" multiple style={{ display:"none" }} onChange={e=>{addImages(e.target.files);e.target.value="";}}/>
-          <input ref={fileRef} type="file" multiple style={{ display:"none" }} onChange={e=>{addFiles(e.target.files);e.target.value="";}}/>
+          <input ref={imgRef} type="file" accept="image/*" multiple style={{ display:"none" }} onChange={e=>{add(e.target.files);e.target.value="";}}/>
+          <input ref={fileRef} type="file" multiple style={{ display:"none" }} onChange={e=>{add(e.target.files);e.target.value="";}}/>
           {files.length>0 && (
             <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:6 }}>
               {files.map((f,i)=>(
-                <div key={i} style={{ position:"relative", borderRadius:8, overflow:"hidden", border:"1px solid "+C.border, aspectRatio:"1", background:C.paper }}>
-                  {f.type && f.type.startsWith("image/") ? <img src={f.data} style={{ width:"100%", height:"100%", objectFit:"cover" }} onClick={()=>setPreview(f.data)}/>
+                <div key={i} style={{ position:"relative", borderRadius:8, overflow:"hidden", border:`1px solid ${C.border}`, aspectRatio:"1", background:C.paper }}>
+                  {f.type?.startsWith("image/") ? <img src={f.data} style={{ width:"100%", height:"100%", objectFit:"cover" }} alt=""/>
                     : <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center" }}><FileText size={20} color={C.muted}/></div>}
-                  <button onClick={()=>setFiles(p=>p.filter((_,j)=>j!==i))} style={{ position:"absolute", top:2, right:2, background:"rgba(0,0,0,0.55)", border:"none", borderRadius:99, width:22, height:22, cursor:"pointer", display:"grid", placeItems:"center" }}><X size={11} color="#fff"/></button>
+                  <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.45)", display:"flex", alignItems:"center", justifyContent:"center", gap:4 }}>
+                    {f.type?.startsWith("image/") && <button onClick={()=>setPreview(f.data)} style={{ background:"rgba(255,255,255,0.2)", border:"none", borderRadius:99, width:28, height:28, cursor:"pointer", display:"grid", placeItems:"center" }}><Eye size={13} color="#fff"/></button>}
+                    <button onClick={()=>setFiles(p=>p.filter((_,j)=>j!==i))} style={{ background:"rgba(255,255,255,0.2)", border:"none", borderRadius:99, width:28, height:28, cursor:"pointer", display:"grid", placeItems:"center" }}><X size={13} color="#fff"/></button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
-          {preview && <div onClick={()=>setPreview(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}><img src={preview} style={{ maxWidth:"100%", maxHeight:"100%", borderRadius:12 }}/></div>}
+          {preview && <div onClick={()=>setPreview(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}><img src={preview} style={{ maxWidth:"100%", maxHeight:"100%", borderRadius:12 }} alt="preview"/></div>}
         </div>
       );
     }
 
-    function EntryFiles({ entryId, count }) {
-      const [files, setFiles] = useState(null);
-      const [open, setOpen] = useState(false);
-      const [preview, setPreview] = useState(null);
-      if(!count) return null;
-      const load = async () => {
-        setOpen(true);
-        if(files) return;
-        try { const d = await dbGet("f-"+entryId); setFiles(d||[]); }
-        catch(e){ setFiles([]); }
-      };
-      return (
-        <React.Fragment>
-          <button onClick={load} style={{ ...sf, background:"#E8F0FB", color:"#1F5FB0", border:"none", borderRadius:6, padding:"4px 10px", fontSize:11, fontWeight:700, cursor:"pointer", marginTop:6, display:"inline-flex", alignItems:"center", gap:5 }}>
-            <Camera size={12}/> View files ({count})
-          </button>
-          {open && (
-            <div onClick={()=>setOpen(false)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:998, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-              <div onClick={e=>e.stopPropagation()} style={{ background:C.card, borderRadius:14, padding:16, width:"100%", maxWidth:380, maxHeight:"70vh", overflowY:"auto" }}>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-                  <span style={{ ...sf, fontWeight:700 }}>Attachments</span>
-                  <button onClick={()=>setOpen(false)} style={{ background:C.paper, border:"none", borderRadius:99, width:28, height:28, cursor:"pointer", display:"grid", placeItems:"center" }}><X size={14}/></button>
-                </div>
-                {!files ? <div style={{ ...sf, color:C.muted, textAlign:"center", padding:20 }}>Loading…</div>
-                  : files.length===0 ? <div style={{ ...sf, color:C.muted, textAlign:"center", padding:20 }}>No files found</div>
-                  : <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
-                      {files.map((f,i)=>(
-                        f.type && f.type.startsWith("image/")
-                          ? <img key={i} src={f.data} onClick={()=>setPreview(f.data)} style={{ width:"100%", aspectRatio:"1", objectFit:"cover", borderRadius:8, cursor:"pointer", border:"1px solid "+C.border }}/>
-                          : <div key={i} style={{ aspectRatio:"1", borderRadius:8, background:"#E8F0FB", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4, padding:4 }}>
-                              <FileText size={20} color="#2C76D1"/>
-                              <span style={{ ...mf, fontSize:9, color:C.muted, textAlign:"center", wordBreak:"break-all" }}>{(f.name||"").slice(0,18)}</span>
-                            </div>
-                      ))}
-                    </div>}
-              </div>
-              {preview && <div onClick={(e)=>{e.stopPropagation();setPreview(null);}} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}><img src={preview} style={{ maxWidth:"100%", maxHeight:"100%", borderRadius:12 }}/></div>}
-            </div>
-          )}
-        </React.Fragment>
-      );
+    function printReport({ title, rows, cols, generated }) {
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title>
+      <style>body{font-family:Arial,sans-serif;margin:32px;color:#111}h1{font-size:22px;margin:0}.sub{color:#666;font-size:13px;margin-top:4px;margin-bottom:24px}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#16181D;color:#fff;padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px}td{padding:8px 10px;border-bottom:1px solid #E4E2DB}tr:nth-child(even) td{background:#F9F8F5}.footer{margin-top:20px;font-size:11px;color:#999}</style>
+      </head><body>
+      <h1>GCS BUILDINGS — ${title}</h1>
+      <div class="sub">Generated: ${generated} &nbsp;|&nbsp; ${rows.length} record(s)</div>
+      <table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>
+      <div class="footer">SRL Log · Fall Protection · GCS Buildings</div>
+      </body></html>`;
+      const w = window.open("","_blank","width=900,height=700");
+      w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>w.print(),400);
     }
 
     function Reports({ inv, shack }) {
       const [rType, setRType] = useState("installed");
       const [rBldg, setRBldg] = useState("All");
       const [rStatus, setRStatus] = useState("All");
-      const getInstalled = () => { const a=new Set(),o=[]; inv.forEach(e=>{ if(e.status==="installed"&&!a.has(e.srlId)){a.add(e.srlId);o.push(e);}else if(e.status==="removed")a.delete(e.srlId);}); return o; };
+      const getInstalled = () => { const active=new Set(),out=[]; inv.forEach(e=>{ if(e.status==="installed"&&!active.has(e.srlId)){active.add(e.srlId);out.push(e);}else if(e.status==="removed")active.delete(e.srlId);}); return out; };
       const preview = (() => {
-        if(rType==="shack"){const bs=rBldg==="All"?BUILDINGS:[rBldg];return bs.flatMap(b=>(shack[b]||[]).map(x=>({...x,building:b})));}
-        if(rType==="installed"){let r=getInstalled();if(rBldg!=="All")r=r.filter(x=>x.building===rBldg);return r;}
-        let r=[...inv];if(rBldg!=="All")r=r.filter(x=>x.building===rBldg);if(rStatus!=="All")r=r.filter(x=>x.status===rStatus);return r;
+        if(rType==="shack") { const bs=rBldg==="All"?BUILDINGS:[rBldg]; return bs.flatMap(b=>(shack[b]||[]).map(x=>({...x,building:b}))); }
+        if(rType==="installed") { let r=getInstalled(); if(rBldg!=="All") r=r.filter(x=>x.building===rBldg); return r; }
+        let r=[...inv]; if(rBldg!=="All") r=r.filter(x=>x.building===rBldg); if(rStatus!=="All") r=r.filter(x=>x.status===rStatus); return r;
       })();
       const doPrint = () => {
-        const now = new Date().toLocaleString();
-        let title, cols, rows;
-        if(rType==="shack"){ title="Print Shack"+(rBldg!=="All"?" - "+rBldg:""); cols=["SRL ID","Building","Received"]; rows=preview.map(x=>[x.srlId,x.building,x.ts]); }
-        else if(rType==="installed"){ title="Installed SRLs"+(rBldg!=="All"?" - "+rBldg:""); cols=["SRL ID","Building","Level","Hivis","Column","Comment","By","Time"]; rows=preview.map(x=>[x.srlId,x.building,x.level,x.hivis,x.column,x.comment||"-",x.by,x.ts]); }
-        else { title="Full Log"+(rBldg!=="All"?" - "+rBldg:""); cols=["SRL ID","Status","Building","Level","By","Time"]; rows=preview.map(x=>[x.srlId,x.status,x.building,x.level,x.by,x.ts]); }
-        const html = "<!DOCTYPE html><html><head><title>"+title+"</title><style>body{font-family:Arial;margin:32px;color:#111}h1{font-size:22px;margin:0}.sub{color:#666;font-size:13px;margin:4px 0 24px}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#16181D;color:#fff;padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase}td{padding:8px 10px;border-bottom:1px solid #E4E2DB}tr:nth-child(even) td{background:#F9F8F5}</style></head><body><h1>GCS BUILDINGS - "+title+"</h1><div class='sub'>Generated: "+now+" | "+rows.length+" record(s)</div><table><thead><tr>"+cols.map(c=>"<th>"+c+"</th>").join("")+"</tr></thead><tbody>"+rows.map(r=>"<tr>"+r.map(c=>"<td>"+c+"</td>").join("")+"</tr>").join("")+"</tbody></table></body></html>";
-        const w = window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),400);
+        const now=new Date().toLocaleString();
+        if(rType==="shack") printReport({ title:`Print Shack${rBldg!=="All"?" · "+rBldg:""}`, generated:now, cols:["SRL ID","Building","Received"], rows:preview.map(x=>[x.srlId,x.building,x.ts]) });
+        else if(rType==="installed") printReport({ title:`Installed SRLs${rBldg!=="All"?" · "+rBldg:""}`, generated:now, cols:["SRL ID","Building","Level","Hivis","Column","Comment","By","Time"], rows:preview.map(x=>[x.srlId,x.building,x.level,x.hivis,x.column,x.comment||"—",x.by,x.ts]) });
+        else printReport({ title:`Full Log${rBldg!=="All"?" · "+rBldg:""}`, generated:now, cols:["SRL ID","Status","Building","Level","By","Time"], rows:preview.map(x=>[x.srlId,x.status,x.building,x.level,x.by,x.ts]) });
       };
       return (
         <div>
-          <div style={{ background:C.card, border:"1px solid "+C.border, borderRadius:12, marginBottom:12, overflow:"hidden" }}>
-            <SectionHead icon={Printer} color="#9A5E04" bg={C.accentSoft} title="Report Settings"/>
-            <div style={{ padding:16 }}>
-              <div style={{ marginBottom:12 }}>
-                <div style={lbl}>Report Type</div>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
-                  {[["shack","Print Shack"],["installed","Installed"],["log","Full Log"]].map(([v,l])=>(
-                    <button key={v} onClick={()=>setRType(v)} style={{ ...sf, background:rType===v?C.accent:C.paper, color:rType===v?C.ink:C.text, border:"1px solid "+(rType===v?C.accent:C.border), borderRadius:8, padding:"10px 6px", fontWeight:700, fontSize:13, cursor:"pointer" }}>{l}</button>
-                  ))}
-                </div>
+          <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:12, padding:16, marginBottom:12 }}>
+            <div style={{ ...sf, fontWeight:700, fontSize:15, marginBottom:14, display:"flex", alignItems:"center", gap:8 }}><Printer size={18} color={C.accent}/> Report Settings</div>
+            <div style={{ marginBottom:12 }}>
+              <div style={{ ...sf, color:C.muted, fontSize:11, fontWeight:700, textTransform:"uppercase", marginBottom:6 }}>Report Type</div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
+                {[["shack","Print Shack"],["installed","Installed"],["log","Full Log"]].map(([v,l])=>(
+                  <button key={v} onClick={()=>setRType(v)} style={{ ...sf, background:rType===v?C.accent:C.paper, color:rType===v?C.ink:C.text, border:`1px solid ${rType===v?C.accent:C.border}`, borderRadius:8, padding:"10px 6px", fontWeight:700, fontSize:13, cursor:"pointer" }}>{l}</button>
+                ))}
               </div>
-              <div style={{ display:"flex", gap:10, marginBottom:16 }}>
-                <div style={{ flex:1 }}>
-                  <div style={lbl}>Building</div>
-                  <select value={rBldg} onChange={e=>setRBldg(e.target.value)} style={inp}><option>All</option>{BUILDINGS.map(b=><option key={b}>{b}</option>)}</select>
-                </div>
-                {rType==="log" && <div style={{ flex:1 }}>
-                  <div style={lbl}>Status</div>
-                  <select value={rStatus} onChange={e=>setRStatus(e.target.value)} style={inp}>{["All","installed","removed","pmi-received","pmi-returned"].map(s=><option key={s}>{s}</option>)}</select>
-                </div>}
-              </div>
-              <button onClick={doPrint} style={btnS(C.accent,C.ink)}><Printer size={17}/> Print Report</button>
             </div>
+            <div style={{ display:"flex", gap:10, marginBottom:16 }}>
+              <div style={{ flex:1 }}>
+                <div style={{ ...sf, color:C.muted, fontSize:11, fontWeight:700, textTransform:"uppercase", marginBottom:6 }}>Building</div>
+                <select value={rBldg} onChange={e=>setRBldg(e.target.value)} style={{ ...inp, width:"auto", flex:1 }}><option>All</option>{BUILDINGS.map(b=><option key={b}>{b}</option>)}</select>
+              </div>
+              {rType==="log" && <div style={{ flex:1 }}>
+                <div style={{ ...sf, color:C.muted, fontSize:11, fontWeight:700, textTransform:"uppercase", marginBottom:6 }}>Status</div>
+                <select value={rStatus} onChange={e=>setRStatus(e.target.value)} style={{ ...inp, width:"auto" }}>{["All","installed","removed","pmi-received","pmi-returned"].map(s=><option key={s}>{s}</option>)}</select>
+              </div>}
+            </div>
+            <button onClick={doPrint} style={btnStyle(C.accent,C.ink)}><Printer size={17}/> Print Report</button>
           </div>
-          <div style={{ background:C.card, border:"1px solid "+C.border, borderRadius:12, overflow:"hidden" }}>
-            <SectionHead icon={FileText} color="#1F5FB0" bg="#E8F0FB" title="Preview" right={<span style={{ ...mf, color:C.muted, fontSize:12 }}>{preview.length} record(s)</span>}/>
-            {preview.length===0 ? <div style={{ padding:32, textAlign:"center", color:C.muted }}><Boxes size={30} color={C.border} style={{ display:"block", margin:"0 auto 8px" }}/>No records match</div>
+          <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:12 }}>
+            <div style={{ padding:"12px 16px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span style={{ ...sf, fontWeight:600 }}>Preview</span>
+              <span style={{ ...mf, color:C.muted, fontSize:12 }}>{preview.length} record(s)</span>
+            </div>
+            {preview.length===0 ? <div style={{ padding:32, textAlign:"center", color:C.muted }}>No records match</div>
               : preview.map((e,i)=>(
-                <div key={i} style={{ padding:"10px 16px", borderBottom:i<preview.length-1?"1px solid "+C.border:"none", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <div>
-                    <div style={{ ...mf, fontWeight:600, fontSize:13 }}>{e.srlId}</div>
-                    <div style={{ ...mf, color:C.muted, fontSize:11, marginTop:2 }}>{e.building}{e.level?" · "+e.level:""}</div>
+                <div key={i} style={{ padding:"10px 16px", borderBottom:i<preview.length-1?`1px solid ${C.border}`:"none" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                    <div>
+                      <div style={{ ...mf, fontWeight:600, fontSize:13 }}>{e.srlId}</div>
+                      <div style={{ ...mf, color:C.muted, fontSize:11, marginTop:2 }}>{e.building}{e.level?" · "+e.level:""}</div>
+                    </div>
+                    {e.status && <Badge status={e.status}/>}
                   </div>
-                  {e.status && <Badge status={e.status}/>}
                 </div>
               ))}
           </div>
@@ -291,75 +197,25 @@
       const [screen,setScreen]=useState("login"); const [user,setUser]=useState(null); const [pending,setPending]=useState(null);
       const [inv,setInv]=useState([]); const [shack,setShack]=useState({"GCS-A":[],"GCS-B":[]});
       const [toast,setToast]=useState(null);
-      const [syncing,setSyncing]=useState(false);
       const [fSrl,setFSrl]=useState(""); const [fBldg,setFBldg]=useState("GCS-A"); const [fLevel,setFLevel]=useState("Ground Level");
       const [fHivis,setFHivis]=useState(""); const [fCol,setFCol]=useState(""); const [fNote,setFNote]=useState(""); const [fFiles,setFFiles]=useState([]);
       const [pmiId,setPmiId]=useState(""); const [pmiQty,setPmiQty]=useState("1");
       const [q,setQ]=useState(""); const [results,setResults]=useState([]);
 
       useEffect(()=>{ if(!toast)return; const t=setTimeout(()=>setToast(null),2500); return()=>clearTimeout(t); },[toast]);
-      const notify=(msg,k)=>setToast({msg,k:k||"ok"});
-
-      const loadData = async () => {
-        setSyncing(true);
-        try {
-          const d = await dbGet("main");
-          if (d) { setInv(d.inv||[]); setShack(d.shack||{"GCS-A":[],"GCS-B":[]}); }
-        } catch(e) {}
-        setSyncing(false);
-      };
-      const persist = async (nextInv, nextShack) => {
-        try { await dbSet("main", { inv:nextInv, shack:nextShack }); }
-        catch(e) { notify("Sync failed — check connection","warn"); }
-      };
-
-      useEffect(()=>{ loadData(); if(!CONFIGURED) setTimeout(()=>notify("Supabase not set up — data won't be shared","warn"),800); },[]);
-      useEffect(()=>{ if(screen!=="login") loadData(); },[screen]);
-
-      const log=extra=>({id:Date.now(),ts:new Date().toLocaleString(),by:user?user.name:"",...extra});
-
-      const installSRL=async()=>{
-        if(!fSrl||!fHivis||!fCol)return notify("Fill all required fields","warn");
-        const entry = log({srlId:fSrl,building:fBldg,level:fLevel,hivis:fHivis,column:fCol,comment:fNote,fileCount:fFiles.length,status:"installed"});
-        const nextInv=[entry,...inv];
-        const nextShack={...shack,[fBldg]:shack[fBldg].filter(x=>x.srlId!==fSrl)};
-        setInv(nextInv); setShack(nextShack);
-        if(fFiles.length){ try{ await dbSet("f-"+entry.id, fFiles); }catch(e){} }
-        persist(nextInv,nextShack);
-        setFSrl("");setFHivis("");setFCol("");setFNote("");setFFiles([]);
-        notify("SRL "+entry.srlId+" installed");
-      };
-      const removeSRL=e=>{
-        const entry = log({srlId:e.srlId,building:e.building,level:"Print Shack",hivis:"—",column:"—",comment:"Returned to shack",fileCount:0,status:"removed"});
-        const nextInv=[entry,...inv];
-        const nextShack={...shack,[e.building]:[...shack[e.building],{srlId:e.srlId,ts:new Date().toLocaleString()}]};
-        setInv(nextInv); setShack(nextShack); persist(nextInv,nextShack);
-        notify("SRL "+e.srlId+" removed");
-      };
-      const receivePMI=()=>{
-        if(!pmiId||!pmiQty)return notify("Fill all required fields","warn");
-        const b=(user&&user.building)||fBldg;
-        const newUnits=[]; for(let i=0;i<parseInt(pmiQty);i++)newUnits.push({srlId:pmiId+"-"+(i+1),ts:new Date().toLocaleString()});
-        const entry = log({srlId:pmiId+" ×"+pmiQty,building:b,level:"PMI Trailer",hivis:"IN",column:"—",comment:"From PMI trailer",fileCount:0,status:"pmi-received"});
-        const nextInv=[entry,...inv];
-        const nextShack={...shack,[b]:[...shack[b],...newUnits]};
-        setInv(nextInv); setShack(nextShack); persist(nextInv,nextShack);
-        setPmiId("");setPmiQty("1");
-        notify(pmiQty+" unit(s) received");
-      };
-      const returnPMI=b=>{
-        const n=shack[b].length; if(!n)return notify("Shack empty","warn");
-        const entry = log({srlId:n+" units",building:b,level:"PMI Trailer",hivis:"OUT",column:"—",comment:"Returned to PMI",fileCount:0,status:"pmi-returned"});
-        const nextInv=[entry,...inv];
-        const nextShack={...shack,[b]:[]};
-        setInv(nextInv); setShack(nextShack); persist(nextInv,nextShack);
-        notify(n+" returned");
-      };
-      const getInstalled=()=>{ const a=new Set(),o=[]; inv.forEach(e=>{ if(e.status==="installed"&&!a.has(e.srlId)){a.add(e.srlId);o.push(e);}else if(e.status==="removed")a.delete(e.srlId);}); return o; };
-      const isQC=user&&(user.role==="QC"||user.role==="Inventory Manager");
+      const notify=(msg,k="ok")=>setToast({msg,k});
+      const addShack=(id,b)=>setShack(p=>({...p,[b]:[...p[b],{srlId:id,ts:new Date().toLocaleString()}]}));
+      const rmShack=(id,b)=>setShack(p=>({...p,[b]:p[b].filter(x=>x.srlId!==id)}));
+      const log=extra=>({id:Date.now(),ts:new Date().toLocaleString(),by:user?.name,files:[],...extra});
+      const installSRL=()=>{ if(!fSrl||!fHivis||!fCol)return notify("Fill all required fields","warn"); setInv(v=>[log({srlId:fSrl,building:fBldg,level:fLevel,hivis:fHivis,column:fCol,comment:fNote,files:fFiles,status:"installed"}),...v]); rmShack(fSrl,fBldg); setFSrl("");setFHivis("");setFCol("");setFNote("");setFFiles([]); notify(`SRL ${fSrl} installed`); };
+      const removeSRL=e=>{ setInv(v=>[log({srlId:e.srlId,building:e.building,level:"Print Shack",hivis:"—",column:"—",comment:"Returned to shack",status:"removed"}),...v]); addShack(e.srlId,e.building); notify(`SRL ${e.srlId} removed`); };
+      const receivePMI=()=>{ if(!pmiId||!pmiQty)return notify("Fill all required fields","warn"); const b=user.building||fBldg; for(let i=0;i<parseInt(pmiQty);i++)addShack(`${pmiId}-${i+1}`,b); setInv(v=>[log({srlId:`${pmiId} ×${pmiQty}`,building:b,level:"PMI Trailer",hivis:"IN",column:"—",comment:"From PMI trailer",status:"pmi-received"}),...v]); setPmiId("");setPmiQty("1"); notify(`${pmiQty} unit(s) received`); };
+      const returnPMI=b=>{ const n=shack[b].length; if(!n)return notify("Shack empty","warn"); setInv(v=>[log({srlId:`${n} units`,building:b,level:"PMI Trailer",hivis:"OUT",column:"—",comment:"Returned to PMI",status:"pmi-returned"}),...v]); setShack(p=>({...p,[b]:[]})); notify(`${n} returned`); };
+      const getInstalled=()=>{ const active=new Set(),out=[]; inv.forEach(e=>{ if(e.status==="installed"&&!active.has(e.srlId)){active.add(e.srlId);out.push(e);}else if(e.status==="removed")active.delete(e.srlId);}); return out; };
+      const isQC=user?.role==="QC"||user?.role==="Inventory Manager";
 
       if(screen==="login"){
-        if(pending) return <PinPad label={pending.role+(pending.building?" · "+pending.building:" · All Buildings")} code={pending.code} onOk={()=>{setUser(pending);if(pending.building)setFBldg(pending.building);setPending(null);setScreen("dashboard");}} onBack={()=>setPending(null)}/>;
+        if(pending) return <PinPad label={`${pending.role}${pending.building?" · "+pending.building:" · All Buildings"}`} code={pending.code} onOk={()=>{setUser(pending);if(pending.building)setFBldg(pending.building);setPending(null);setScreen("dashboard");}} onBack={()=>setPending(null)}/>;
         return (
           <div style={{ background:C.ink, minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
             <div style={{ width:"100%", maxWidth:360 }}>
@@ -367,16 +223,13 @@
                 <div style={{ background:C.accent, borderRadius:12, width:52, height:52, display:"grid", placeItems:"center" }}><HardHat size={28} color={C.ink}/></div>
                 <div><div style={{ ...df, color:"#fff", fontSize:36, fontWeight:700, lineHeight:1 }}>GCS BUILDINGS</div><div style={{ ...mf, color:"#7E8794", fontSize:11, marginTop:4, letterSpacing:2 }}>SRL LOG · FALL PROTECTION</div></div>
               </div>
-              <div style={{ background:C.inkSoft, borderRadius:12, padding:16, border:"1px solid "+C.line }}>
+              <div style={{ background:C.inkSoft, borderRadius:12, padding:16, border:`1px solid ${C.line}` }}>
                 <div style={{ ...sf, color:"#9AA3AF", fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:2, marginBottom:12 }}>SIGN IN</div>
                 {USERS.map((u,i)=>(
-                  <button key={i} onClick={()=>setPending(u)} style={{ ...sf, background:"#262B33", border:"1px solid "+C.line, borderRadius:10, padding:"14px 16px", width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", marginBottom:i<USERS.length-1?8:0 }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                      <div style={{ width:34, height:34, borderRadius:99, background:C.accent, display:"grid", placeItems:"center", flexShrink:0 }}><User size={16} color={C.ink}/></div>
-                      <div style={{ textAlign:"left" }}>
-                        <div style={{ color:"#E6E8EC", fontWeight:600, fontSize:14 }}>{u.name}</div>
-                        <div style={{ ...mf, color:"#7E8794", fontSize:11, marginTop:2, textTransform:"uppercase", letterSpacing:1 }}>{u.role}{u.building?" · "+u.building:" · ALL BUILDINGS"}</div>
-                      </div>
+                  <button key={i} onClick={()=>setPending(u)} style={{ ...sf, background:"#262B33", border:`1px solid ${C.line}`, borderRadius:10, padding:"14px 16px", width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", marginBottom:i<USERS.length-1?8:0 }}>
+                    <div style={{ textAlign:"left" }}>
+                      <div style={{ color:"#E6E8EC", fontWeight:600, fontSize:14 }}>{u.name}</div>
+                      <div style={{ ...mf, color:"#7E8794", fontSize:11, marginTop:2, textTransform:"uppercase", letterSpacing:1 }}>{u.role}{u.building?` · ${u.building}`:" · ALL BUILDINGS"}</div>
                     </div>
                     <ChevronRight size={18} color="#7E8794"/>
                   </button>
@@ -388,59 +241,43 @@
       }
 
       const tabs = isQC
-        ? [{id:"dashboard",l:"Home",ic:LayoutDashboard},{id:"install",l:"Install",ic:PackagePlus},{id:"installed",l:"Installed",ic:ListChecks},{id:"reports",l:"Reports",ic:Printer},{id:"search",l:"History",ic:Search}]
-        : [{id:"dashboard",l:"Home",ic:LayoutDashboard},{id:"pmi",l:"PMI",ic:Truck},{id:"shack",l:"Shack",ic:Warehouse},{id:"reports",l:"Reports",ic:Printer},{id:"search",l:"History",ic:Search}];
+        ? [{id:"dashboard",l:"Home"},{id:"install",l:"Install"},{id:"installed",l:"Installed"},{id:"reports",l:"Reports"},{id:"search",l:"History"}]
+        : [{id:"dashboard",l:"Home"},{id:"pmi",l:"PMI"},{id:"shack",l:"Shack"},{id:"reports",l:"Reports"},{id:"search",l:"History"}];
 
       return (
         <div style={{ background:C.paper, minHeight:"100vh", ...sf }}>
-          <div style={{ background:C.card, borderBottom:"1px solid "+C.border, padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-              <div style={{ background:C.accent, borderRadius:8, width:34, height:34, display:"grid", placeItems:"center" }}><HardHat size={18} color={C.ink}/></div>
-              <div>
-                <div style={{ ...df, color:C.text, fontSize:20, fontWeight:700, lineHeight:1 }}>GCS BUILDINGS</div>
-                <div style={{ ...mf, color:C.muted, fontSize:10, marginTop:2 }}>{user?user.name:""}{user&&user.building?" · "+user.building:""}</div>
-              </div>
+          <div style={{ background:C.card, borderBottom:`1px solid ${C.border}`, padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <div>
+              <div style={{ ...df, color:C.text, fontSize:20, fontWeight:700 }}>GCS BUILDINGS</div>
+              <div style={{ ...mf, color:C.muted, fontSize:10 }}>{user?.name}{user?.building?` · ${user.building}`:""}</div>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <button onClick={loadData} style={{ background:C.paper, border:"1px solid "+C.border, borderRadius:8, width:36, height:36, display:"grid", placeItems:"center", cursor:"pointer" }}>
-                <RefreshCw size={15} color={syncing?C.accent:C.muted} style={syncing?{animation:"spin 1s linear infinite"}:{}}/>
-              </button>
-              {user&&user.building && <div style={{ background:C.accentSoft, borderRadius:8, padding:"4px 10px", display:"flex", alignItems:"center", gap:4 }}><MapPin size={13} color={C.accent}/><span style={{ ...sf, color:"#9A5E04", fontSize:12, fontWeight:600 }}>{user.building}</span></div>}
-              <button onClick={()=>{setUser(null);setPending(null);setScreen("login");}} style={{ background:C.paper, border:"1px solid "+C.border, borderRadius:8, width:36, height:36, display:"grid", placeItems:"center", cursor:"pointer" }}><LogOut size={16} color={C.muted}/></button>
+              {user?.building && <div style={{ background:"#FBEFD7", borderRadius:8, padding:"4px 10px", display:"flex", alignItems:"center", gap:4 }}><MapPin size={13} color={C.accent}/><span style={{ ...sf, color:"#9A5E04", fontSize:12, fontWeight:600 }}>{user.building}</span></div>}
+              <button onClick={()=>{setUser(null);setPending(null);setScreen("login");}} style={{ background:C.paper, border:`1px solid ${C.border}`, borderRadius:8, width:36, height:36, display:"grid", placeItems:"center", cursor:"pointer" }}><LogOut size={16} color={C.muted}/></button>
             </div>
           </div>
 
-          <div style={{ padding:16, paddingBottom:84 }}>
+          <div style={{ padding:16, paddingBottom:80 }}>
             {screen==="dashboard" && (
               <div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:16 }}>
-                  {[
-                    {l:"Installed",v:getInstalled().length,ic:ListChecks,bg:"#E7F4EC",fg:"#1B7A43"},
-                    {l:"GCS-A Shack",v:shack["GCS-A"].length,ic:Warehouse,bg:"#E8F0FB",fg:"#1F5FB0"},
-                    {l:"GCS-B Shack",v:shack["GCS-B"].length,ic:Warehouse,bg:"#FBEFD7",fg:"#9A5E04"},
-                    {l:"Log Entries",v:inv.length,ic:Activity,bg:"#F1ECF9",fg:"#6A45A8"},
-                  ].map((mm,i)=>{
-                    const Ic = mm.ic;
-                    return (
-                      <div key={i} style={{ background:C.card, border:"1px solid "+C.border, borderRadius:12, padding:14 }}>
-                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-                          <div>
-                            <div style={{ ...sf, color:C.muted, fontSize:11, fontWeight:600, textTransform:"uppercase" }}>{mm.l}</div>
-                            <div style={{ ...df, color:C.text, fontSize:36, fontWeight:700, marginTop:4, lineHeight:1 }}>{mm.v}</div>
-                          </div>
-                          <div style={{ width:34, height:34, borderRadius:8, background:mm.bg, display:"grid", placeItems:"center" }}><Ic size={17} color={mm.fg}/></div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {[{l:"Installed",v:getInstalled().length,c:"#E7F4EC"},{l:"GCS-A Shack",v:shack["GCS-A"].length,c:"#E8F0FB"},{l:"GCS-B Shack",v:shack["GCS-B"].length,c:"#FBEFD7"},{l:"Log Entries",v:inv.length,c:"#F1ECF9"}].map((m,i)=>(
+                    <div key={i} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:12, padding:14 }}>
+                      <div style={{ ...sf, color:C.muted, fontSize:11, fontWeight:600, textTransform:"uppercase" }}>{m.l}</div>
+                      <div style={{ ...df, color:C.text, fontSize:36, fontWeight:700, marginTop:4 }}>{m.v}</div>
+                      <div style={{ height:3, background:m.c, borderRadius:99, marginTop:8 }}/>
+                    </div>
+                  ))}
                 </div>
-                <div style={{ background:C.card, border:"1px solid "+C.border, borderRadius:12, overflow:"hidden" }}>
-                  <SectionHead icon={Activity} color="#6A45A8" bg="#F1ECF9" title="Recent Activity"
-                    right={<button onClick={()=>setScreen("search")} style={{ color:C.accent, background:"none", border:"none", fontWeight:600, cursor:"pointer", fontSize:13, ...sf }}>View all</button>}/>
-                  {inv.length===0 ? <div style={{ padding:32, textAlign:"center", color:C.muted }}><Boxes size={30} color={C.border} style={{ display:"block", margin:"0 auto 8px" }}/>No activity yet</div>
+                <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:12 }}>
+                  <div style={{ padding:"12px 16px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between" }}>
+                    <span style={{ fontWeight:600 }}>Recent Activity</span>
+                    <button onClick={()=>setScreen("search")} style={{ color:C.accent, background:"none", border:"none", fontWeight:600, cursor:"pointer", fontSize:13 }}>View all</button>
+                  </div>
+                  {inv.length===0 ? <div style={{ padding:32, textAlign:"center", color:C.muted }}>No activity yet</div>
                     : inv.slice(0,6).map((e,i)=>(
-                      <div key={i} style={{ padding:"10px 16px", borderBottom:i<5&&i<inv.length-1?"1px solid "+C.border:"none", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                        <div><div style={{ ...mf, fontWeight:600, fontSize:13 }}>{e.srlId}</div><div style={{ ...mf, color:C.muted, fontSize:11 }}>{e.building} · {e.level} · {e.by}</div></div>
+                      <div key={i} style={{ padding:"10px 16px", borderBottom:i<5&&i<inv.length-1?`1px solid ${C.border}`:"none", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                        <div><div style={{ ...mf, fontWeight:600, fontSize:13 }}>{e.srlId}</div><div style={{ ...mf, color:C.muted, fontSize:11 }}>{e.building} · {e.level}</div></div>
                         <Badge status={e.status}/>
                       </div>
                     ))}
@@ -450,40 +287,35 @@
 
             {screen==="install" && (
               <div style={{ maxWidth:500 }}>
-                <div style={{ background:C.card, border:"1px solid "+C.border, borderRadius:12, overflow:"hidden" }}>
-                  <SectionHead icon={PackagePlus} color="#1B7A43" bg="#E7F4EC" title="Install SRL"/>
-                  <div style={{ padding:16 }}>
-                    {[["SRL ID",fSrl,e=>setFSrl(e.target.value.toUpperCase()),"e.g. 123456"],["Hivis (scaffold #)",fHivis,e=>setFHivis(e.target.value.toUpperCase()),"e.g. 654321"],["Column",fCol,e=>setFCol(e.target.value.toUpperCase()),"e.g. A1"]].map(([l,v,fn,ph],i)=>(
-                      <div key={i} style={{ marginBottom:14 }}>
-                        <div style={lbl}>{l} *</div>
-                        <input value={v} onChange={fn} placeholder={ph} style={{ ...inp, ...mf }}/>
-                      </div>
-                    ))}
-                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
-                      <div><div style={lbl}>Building</div><select value={fBldg} onChange={e=>setFBldg(e.target.value)} style={inp}>{BUILDINGS.map(b=><option key={b}>{b}</option>)}</select></div>
-                      <div><div style={lbl}>Level</div><select value={fLevel} onChange={e=>setFLevel(e.target.value)} style={inp}>{LEVELS.map(l=><option key={l}>{l}</option>)}</select></div>
+                <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:12, padding:16 }}>
+                  {[["SRL ID",fSrl,e=>setFSrl(e.target.value.toUpperCase()),"e.g. 123456"],["Hivis (scaffold #)",fHivis,e=>setFHivis(e.target.value.toUpperCase()),"e.g. 654321"],["Column",fCol,e=>setFCol(e.target.value.toUpperCase()),"e.g. A1"]].map(([l,v,fn,ph],i)=>(
+                    <div key={i} style={{ marginBottom:14 }}>
+                      <div style={{ ...sf, color:C.muted, fontSize:11, fontWeight:700, textTransform:"uppercase", marginBottom:6 }}>{l} *</div>
+                      <input value={v} onChange={fn} placeholder={ph} style={{ ...inp, ...mf }}/>
                     </div>
-                    <div style={{ marginBottom:14 }}><div style={lbl}>Comments</div><textarea value={fNote} onChange={e=>setFNote(e.target.value)} placeholder="Optional notes..." rows={3} style={{ ...inp, resize:"none" }}/></div>
-                    <div style={{ marginBottom:16 }}><div style={lbl}>Photos & Files (up to 5)</div><FileUploader files={fFiles} setFiles={setFFiles}/></div>
-                    <button onClick={installSRL} style={btnS(C.accent,C.ink)}><PackagePlus size={17}/> Confirm Installation</button>
+                  ))}
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
+                    <div><div style={{ ...sf, color:C.muted, fontSize:11, fontWeight:700, textTransform:"uppercase", marginBottom:6 }}>Building</div><select value={fBldg} onChange={e=>setFBldg(e.target.value)} style={inp}>{BUILDINGS.map(b=><option key={b}>{b}</option>)}</select></div>
+                    <div><div style={{ ...sf, color:C.muted, fontSize:11, fontWeight:700, textTransform:"uppercase", marginBottom:6 }}>Level</div><select value={fLevel} onChange={e=>setFLevel(e.target.value)} style={inp}>{LEVELS.map(l=><option key={l}>{l}</option>)}</select></div>
                   </div>
+                  <div style={{ marginBottom:14 }}><div style={{ ...sf, color:C.muted, fontSize:11, fontWeight:700, textTransform:"uppercase", marginBottom:6 }}>Comments</div><textarea value={fNote} onChange={e=>setFNote(e.target.value)} placeholder="Optional notes..." rows={3} style={{ ...inp, resize:"none" }}/></div>
+                  <div style={{ marginBottom:16 }}><div style={{ ...sf, color:C.muted, fontSize:11, fontWeight:700, textTransform:"uppercase", marginBottom:6 }}>Photos & Files (up to 5)</div><FileUploader files={fFiles} setFiles={setFFiles}/></div>
+                  <button onClick={installSRL} style={btnStyle(C.accent,C.ink)}>Confirm Installation</button>
                 </div>
               </div>
             )}
 
             {screen==="installed" && (
-              <div style={{ background:C.card, border:"1px solid "+C.border, borderRadius:12, overflow:"hidden" }}>
-                <SectionHead icon={ListChecks} color="#1B7A43" bg="#E7F4EC" title="Installed Units"
-                  right={<span style={{ ...df, color:C.accent, fontSize:22, fontWeight:700 }}>{getInstalled().length}</span>}/>
-                {getInstalled().length===0 ? <div style={{ padding:32, textAlign:"center", color:C.muted }}><Boxes size={30} color={C.border} style={{ display:"block", margin:"0 auto 8px" }}/>No SRLs installed</div>
+              <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:12 }}>
+                {getInstalled().length===0 ? <div style={{ padding:32, textAlign:"center", color:C.muted }}>No SRLs installed</div>
                   : getInstalled().map((e,i,arr)=>(
-                    <div key={i} style={{ padding:"12px 16px", borderBottom:i<arr.length-1?"1px solid "+C.border:"none" }}>
+                    <div key={i} style={{ padding:"12px 16px", borderBottom:i<arr.length-1?`1px solid ${C.border}`:"none" }}>
                       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
                         <div>
                           <div style={{ ...mf, fontWeight:600 }}>{e.srlId}</div>
                           <div style={{ ...mf, color:C.muted, fontSize:11, marginTop:2 }}>{e.building} · {e.level} · H{e.hivis}/{e.column}</div>
                           {e.comment && <div style={{ ...sf, color:C.muted, fontSize:12, marginTop:2 }}>{e.comment}</div>}
-                          <EntryFiles entryId={e.id} count={e.fileCount}/>
+                          {e.files?.length>0 && <div style={{ display:"flex", gap:4, marginTop:6 }}>{e.files.map((f,j)=>f.type?.startsWith("image/") ? <img key={j} src={f.data} style={{ width:32,height:32,borderRadius:6,objectFit:"cover",border:`1px solid ${C.border}` }} alt=""/> : <div key={j} style={{ width:32,height:32,borderRadius:6,background:"#E8F0FB",display:"grid",placeItems:"center" }}><FileText size={14} color="#2C76D1"/></div>)}</div>}
                         </div>
                         <button onClick={()=>removeSRL(e)} style={{ ...sf, background:"#FBEAEA", color:"#B23030", border:"none", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:700, cursor:"pointer" }}>Remove</button>
                       </div>
@@ -492,41 +324,39 @@
               </div>
             )}
 
-            {screen==="reports" && <Reports inv={inv} shack={shack}/>}
+            {screen==="reports" && <Reports inv={inv} shack={shack} user={user}/>}
 
             {screen==="pmi" && (
               <div>
-                <div style={{ background:C.card, border:"1px solid "+C.border, borderRadius:12, marginBottom:12, overflow:"hidden" }}>
-                  <SectionHead icon={Truck} color="#1F5FB0" bg="#E8F0FB" title="PMI Trailer · Receive"/>
-                  <div style={{ padding:16 }}>
-                    <div style={{ marginBottom:12 }}><div style={lbl}>SRL Batch ID *</div><input value={pmiId} onChange={e=>setPmiId(e.target.value.toUpperCase())} placeholder="e.g. SRL-001" style={{ ...inp, ...mf }}/></div>
-                    <div style={{ marginBottom:16 }}><div style={lbl}>Quantity *</div><input type="number" min="1" value={pmiQty} onChange={e=>setPmiQty(e.target.value)} style={inp}/></div>
-                    <button onClick={receivePMI} style={btnS(C.accent,C.ink)}><ArrowDownToLine size={17}/> Confirm Receipt</button>
-                  </div>
+                <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:12, padding:16, marginBottom:12 }}>
+                  <div style={{ ...sf, fontWeight:600, marginBottom:14 }}>Receive from PMI Trailer</div>
+                  <div style={{ marginBottom:12 }}><div style={{ ...sf, color:C.muted, fontSize:11, fontWeight:700, textTransform:"uppercase", marginBottom:6 }}>SRL Batch ID *</div><input value={pmiId} onChange={e=>setPmiId(e.target.value.toUpperCase())} placeholder="e.g. SRL-001" style={{ ...inp, ...mf }}/></div>
+                  <div style={{ marginBottom:16 }}><div style={{ ...sf, color:C.muted, fontSize:11, fontWeight:700, textTransform:"uppercase", marginBottom:6 }}>Quantity *</div><input type="number" min="1" value={pmiQty} onChange={e=>setPmiQty(e.target.value)} style={inp}/></div>
+                  <button onClick={receivePMI} style={btnStyle(C.accent,C.ink)}>Confirm Receipt</button>
                 </div>
-                <div style={{ background:C.card, border:"1px solid "+C.border, borderRadius:12, overflow:"hidden" }}>
-                  <SectionHead icon={Truck} color="#B23030" bg="#FBEAEA" title="PMI Trailer · Return Excess"/>
-                  <div style={{ padding:16 }}>
-                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", background:C.paper, borderRadius:8, padding:"10px 14px", marginBottom:12 }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:8 }}><Warehouse size={16} color={C.muted}/><span style={{ color:C.muted, fontSize:13 }}>Units in {user&&user.building} shack</span></div>
-                      <span style={{ ...df, fontSize:28, fontWeight:700 }}>{(user&&shack[user.building]?shack[user.building].length:0)}</span>
-                    </div>
-                    <button onClick={()=>returnPMI(user.building)} style={{ ...btnS("#FBEAEA","#B23030"), border:"1px solid #F2C9C9" }}><ArrowUpFromLine size={16}/> Return All to PMI</button>
+                <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:12, padding:16 }}>
+                  <div style={{ ...sf, fontWeight:600, marginBottom:8 }}>Return Excess to PMI</div>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", background:C.paper, borderRadius:8, padding:"10px 14px", marginBottom:12 }}>
+                    <span style={{ color:C.muted, fontSize:13 }}>Units in {user?.building} shack</span>
+                    <span style={{ ...df, fontSize:28, fontWeight:700 }}>{shack[user?.building]?.length||0}</span>
                   </div>
+                  <button onClick={()=>returnPMI(user?.building)} style={btnStyle("#FBEAEA","#B23030")}>Return All to PMI</button>
                 </div>
               </div>
             )}
 
             {screen==="shack" && (
               <div style={{ display:"grid", gap:12 }}>
-                {(user&&user.building?[user.building]:BUILDINGS).map(b=>(
-                  <div key={b} style={{ background:C.card, border:"1px solid "+C.border, borderRadius:12, overflow:"hidden" }}>
-                    <SectionHead icon={Warehouse} color="#9A5E04" bg={C.accentSoft} title={b+" Print Shack"}
-                      right={<span style={{ ...df, color:C.accent, fontSize:24, fontWeight:700 }}>{shack[b]?shack[b].length:0}</span>}/>
+                {(user?.building?[user.building]:BUILDINGS).map(b=>(
+                  <div key={b} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:12 }}>
+                    <div style={{ padding:"12px 16px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between" }}>
+                      <span style={{ fontWeight:600 }}>{b} Print Shack</span>
+                      <span style={{ ...df, color:C.accent, fontSize:24, fontWeight:700 }}>{shack[b]?.length||0}</span>
+                    </div>
                     <div style={{ maxHeight:240, overflowY:"auto" }}>
-                      {(!shack[b]||shack[b].length===0) ? <div style={{ padding:24, textAlign:"center", color:C.muted }}><Boxes size={26} color={C.border} style={{ display:"block", margin:"0 auto 6px" }}/>Empty</div>
+                      {shack[b]?.length===0 ? <div style={{ padding:24, textAlign:"center", color:C.muted }}>Empty</div>
                         : shack[b].map((x,i)=>(
-                          <div key={i} style={{ padding:"8px 16px", borderBottom:"1px solid "+C.border, display:"flex", justifyContent:"space-between" }}>
+                          <div key={i} style={{ padding:"8px 16px", borderBottom:`1px solid ${C.border}`, display:"flex", justifyContent:"space-between" }}>
                             <span style={{ ...mf, fontSize:13 }}>{x.srlId}</span>
                             <span style={{ ...mf, color:C.muted, fontSize:11 }}>{x.ts}</span>
                           </div>
@@ -541,19 +371,17 @@
               <div>
                 <div style={{ display:"flex", gap:8, marginBottom:14 }}>
                   <input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&setResults(q?inv.filter(x=>x.srlId.toUpperCase().includes(q.toUpperCase())):[])} placeholder="Search SRL ID…" style={{ ...inp, flex:1, ...mf }}/>
-                  <button onClick={()=>setResults(q?inv.filter(x=>x.srlId.toUpperCase().includes(q.toUpperCase())):[])} style={{ ...sf, background:C.accent, color:C.ink, border:"none", borderRadius:8, padding:"0 16px", fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}><Search size={15}/> Go</button>
+                  <button onClick={()=>setResults(q?inv.filter(x=>x.srlId.toUpperCase().includes(q.toUpperCase())):[])} style={{ ...sf, background:C.accent, color:C.ink, border:"none", borderRadius:8, padding:"0 20px", fontWeight:700, cursor:"pointer" }}>Search</button>
                 </div>
-                <div style={{ background:C.card, border:"1px solid "+C.border, borderRadius:12, overflow:"hidden" }}>
-                  <SectionHead icon={Search} color="#6A45A8" bg="#F1ECF9" title="Movement History"/>
-                  {results.length===0 ? <div style={{ padding:32, textAlign:"center", color:C.muted }}><Search size={28} color={C.border} style={{ display:"block", margin:"0 auto 8px" }}/>Enter an SRL ID to search</div>
+                <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:12 }}>
+                  {results.length===0 ? <div style={{ padding:32, textAlign:"center", color:C.muted }}>Enter an SRL ID to search</div>
                     : results.map((e,i)=>(
-                      <div key={i} style={{ padding:"12px 16px", borderBottom:i<results.length-1?"1px solid "+C.border:"none" }}>
+                      <div key={i} style={{ padding:"12px 16px", borderBottom:i<results.length-1?`1px solid ${C.border}`:"none" }}>
                         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
                           <span style={{ ...mf, fontWeight:600 }}>{e.srlId}</span><Badge status={e.status}/>
                         </div>
                         <div style={{ ...mf, color:C.muted, fontSize:11 }}>{e.building} · {e.level}</div>
                         <div style={{ ...sf, color:C.muted, fontSize:12 }}>{e.by} · {e.ts}</div>
-                        <EntryFiles entryId={e.id} count={e.fileCount}/>
                       </div>
                     ))}
                 </div>
@@ -561,21 +389,14 @@
             )}
           </div>
 
-          <div style={{ position:"fixed", bottom:0, left:0, right:0, background:C.ink, borderTop:"1px solid "+C.line, display:"flex", zIndex:50 }}>
-            {tabs.map(t=>{
-              const Ic = t.ic;
-              return (
-                <button key={t.id} onClick={()=>setScreen(t.id)}
-                  style={{ flex:1, ...sf, color:screen===t.id?C.accent:"#8A929C", background:"none", border:"none", padding:"9px 0 10px", fontSize:10, fontWeight:600, cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                  <Ic size={20}/>
-                  {t.l}
-                </button>
-              );
-            })}
+          <div style={{ position:"fixed", bottom:0, left:0, right:0, background:C.ink, borderTop:`1px solid ${C.line}`, display:"flex", zIndex:50 }}>
+            {tabs.map(t=>(
+              <button key={t.id} onClick={()=>setScreen(t.id)} style={{ flex:1, ...sf, color:screen===t.id?C.accent:"#8A929C", background:"none", border:"none", padding:"12px 0", fontSize:11, fontWeight:600, cursor:"pointer" }}>{t.l}</button>
+            ))}
           </div>
 
           {toast && (
-            <div style={{ position:"fixed", bottom:76, right:16, background:C.card, border:"1px solid "+C.border, borderRadius:12, padding:"12px 16px", display:"flex", alignItems:"center", gap:10, minWidth:220, boxShadow:"0 4px 20px rgba(0,0,0,0.1)", zIndex:99 }}>
+            <div style={{ position:"fixed", bottom:72, right:16, background:C.card, border:`1px solid ${C.border}`, borderRadius:12, padding:"12px 16px", display:"flex", alignItems:"center", gap:10, minWidth:220, boxShadow:"0 4px 20px rgba(0,0,0,0.1)", zIndex:99 }}>
               {toast.k==="warn"?<X size={16} color="#D14343"/>:<CheckCircle2 size={16} color="#22A35A"/>}
               <span style={{ ...sf, color:C.text, fontSize:13 }}>{toast.msg}</span>
             </div>
@@ -584,7 +405,8 @@
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App/>);
   </script>
 </body>
 </html>

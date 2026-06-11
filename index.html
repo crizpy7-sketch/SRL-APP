@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <!-- PWA Meta -->
+  <meta name="theme-color" content="#15191E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GCS SRL Log">
+  <meta name="description" content="SRL Fall Protection Log for GCS Buildings">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23E8910C'/%3E%3Cpath d='M14 40h36v6H14z' fill='%2315191E'/%3E%3Cpath d='M22 38c0-8 4-14 10-14s10 6 10 14' fill='none' stroke='%2315191E' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+
+  <title>GCS SRL Log</title>
+
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --ink: #15191E;
+      --steel: #232A31;
+      --bg: #F1F1EC;
+      --card: #FFFFFF;
+      --text: #1B2026;
+      --muted: #69707A;
+      --line: #E3E2DA;
+      --amber: #E8910C;
+      --amber-ink: #8A5200;
+      --amber-soft: #FCF0DB;
+      --green: #178A45;
+      --green-soft: #E2F5E9;
+      --red: #D7263C;
+      --red-soft: #FDECEE;
+      --blue: #2563EB;
+      --blue-soft: #E8EFFD;
+      --violet: #7C3AED;
+      --violet-soft: #F1EBFD;
+      --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      --disp: 'Space Grotesk', 'Inter', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--ink);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button { font-family: inherit; touch-action: manipulation; cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 2px solid var(--amber);
+      outline-offset: 2px;
+    }
+
+    .app { max-width: 480px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; background: var(--bg); }
+
+    .hazard {
+      height: 6px;
+      background: repeating-linear-gradient(-45deg, var(--amber) 0 12px, var(--ink) 12px 24px);
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ============ LOGIN ============ */
+    .login-hero {
+      background: linear-gradient(160deg, #1B222A 0%, #15191E 70%);
+      color: #fff;
+      padding: calc(54px + env(safe-area-inset-top)) 24px 42px;
+      text-align: center;
+    }
+
+    .monogram {
+      width: 64px; height: 64px;
+      background: var(--amber);
+      border-radius: 18px;
+      display: grid; place-items: center;
+      margin: 0 auto 16px;
+      box-shadow: 0 8px 24px rgba(232,145,12,0.35);
+    }
+    .monogram svg { width: 34px; height: 34px; color: var(--ink); }
+
+    .login-title { font-family: var(--disp); font-size: 30px; font-weight: 700; letter-spacing: 0.04em; }
+    .login-sub { font-size: 12px; font-weight: 700; letter-spacing: 0.22em; color: var(--amber); margin-top: 6px; }
+    .login-sites { display: inline-flex; gap: 8px; margin-top: 18px; }
+    .site-chip {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: rgba(255,255,255,0.75);
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 4px 10px; border-radius: 999px;
+    }
+
+    .login-body { padding: 26px 20px calc(30px + env(safe-area-inset-bottom)); }
+    .login-body .eyebrow { margin-bottom: 4px; }
+    .login-hint { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+
+    .user-btn {
+      width: 100%;
+      display: flex; align-items: center; gap: 14px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      text-align: left;
+      transition: transform 0.12s ease;
+    }
+    .user-btn:active { transform: scale(0.98); }
+
+    .avatar {
+      width: 44px; height: 44px; border-radius: 13px;
+      display: grid; place-items: center;
+      font-family: var(--disp); font-weight: 700; font-size: 16px;
+      flex-shrink: 0;
+    }
+    .av-amber  { background: var(--amber-soft);  color: var(--amber-ink); }
+    .av-blue   { background: var(--blue-soft);   color: var(--blue); }
+    .av-green  { background: var(--green-soft);  color: var(--green); }
+
+    .user-name { font-weight: 600; font-size: 15px; }
+    .user-role { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .user-btn .chev { margin-left: auto; color: #B6BCC4; width: 18px; height: 18px; flex-shrink: 0; }
+
+    .login-foot { text-align: center; font-size: 11px; color: #A6ABB3; margin-top: 14px; }
+
+    /* ============ HEADER ============ */
+    .header {
+      position: sticky; top: 0; z-index: 60;
+      background: var(--ink);
+      color: #fff;
+      padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .header .monogram-sm {
+      width: 38px; height: 38px; border-radius: 11px;
+      background: var(--amber); display: grid; place-items: center; flex-shrink: 0;
+    }
+    .header .monogram-sm svg { width: 21px; height: 21px; color: var(--ink); }
+    .h-title { font-family: var(--disp); font-size: 17px; font-weight: 700; letter-spacing: 0.04em; line-height: 1.1; }
+    .h-user { font-size: 11px; color: #9AA1AA; margin-top: 2px; }
+
+    .h-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .icon-btn {
+      width: 38px; height: 38px; border-radius: 11px;
+      background: rgba(255,255,255,0.08);
+      border: none; color: #C7CCD3;
+      display: grid; place-items: center;
+    }
+    .icon-btn svg { width: 18px; height: 18px; }
+    .icon-btn:active { background: rgba(255,255,255,0.16); }
+
+    .sync-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.08);
+      border: none; color: #C7CCD3;
+      font-size: 11px; font-weight: 600;
+      padding: 0 11px; height: 38px; border-radius: 11px;
+    }
+    .sync-dot { width: 7px; height: 7px; border-radius: 999px; background: #6B7280; flex-shrink: 0; }
+    .sync-pill.ok .sync-dot { background: #34D178; }
+    .sync-pill.busy .sync-dot { background: var(--amber); animation: pulse 1s ease infinite; }
+    .sync-pill.off .sync-dot { background: #9CA3AF; }
+    @keyframes pulse { 50% { opacity: 0.3; } }
+
+    /* ============ SCREENS ============ */
+    .screen { display: none; padding: 18px 16px calc(96px + env(safe-area-inset-bottom)); animation: rise 0.22s ease; }
+    .screen.active { display: block; }
+    @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 2px rgba(21,25,30,0.04);
+      overflow: hidden;
+    }
+
+    .section-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 600; font-size: 15px;
+    }
+    .section-header svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    .count-chip {
+      margin-left: auto;
+      font-family: var(--disp); font-weight: 700; font-size: 12px;
+      padding: 2px 10px; border-radius: 999px;
+    }
+    .chip-green  { background: var(--green-soft); color: var(--green); }
+    .chip-amber  { background: var(--amber-soft); color: var(--amber-ink); }
+
+    /* ---- dashboard ---- */
+    .dash-date { padding: 2px 4px 14px; }
+    .dash-date .eyebrow { color: #8A9099; }
+
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      text-align: left;
+      transition: transform 0.12s ease;
+    }
+    .stat-card:active { transform: scale(0.97); }
+    .stat-ico {
+      width: 32px; height: 32px; border-radius: 10px;
+      display: grid; place-items: center; margin-bottom: 10px;
+    }
+    .stat-ico svg { width: 17px; height: 17px; }
+    .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; }
+    .stat-value { font-family: var(--disp); font-size: 32px; font-weight: 700; line-height: 1.1; margin-top: 2px; color: var(--ink); }
+
+    /* ---- rows ---- */
+    .row { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; }
+    .row:last-child { border-bottom: none; }
+    .row.tap { width: 100%; background: none; border-left: none; border-right: none; border-top: none; text-align: left; }
+    .row.tap:active { background: #FAFAF6; }
+    .row-ico {
+      width: 36px; height: 36px; border-radius: 11px;
+      display: grid; place-items: center; flex-shrink: 0;
+    }
+    .row-ico svg { width: 17px; height: 17px; }
+    .ico-green  { background: var(--green-soft);  color: var(--green); }
+    .ico-amber  { background: var(--amber-soft);  color: var(--amber-ink); }
+    .ico-blue   { background: var(--blue-soft);   color: var(--blue); }
+    .ico-violet { background: var(--violet-soft); color: var(--violet); }
+    .ico-steel  { background: #ECECE6; color: var(--steel); }
+
+    .row-main { min-width: 0; flex: 1; }
+    .row-id { font-family: var(--mono); font-weight: 700; font-size: 14px; letter-spacing: -0.01em; }
+    .row-meta { font-size: 12px; color: var(--muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .row-note { font-size: 12px; color: #8A9099; font-style: italic; margin-top: 2px; }
+    .row-side { text-align: right; flex-shrink: 0; }
+    .row-time { font-size: 11px; color: #9AA1AA; margin-top: 4px; }
+
+    .att-chip {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 10px; font-weight: 700;
+      color: var(--steel);
+      background: #ECECE6;
+      padding: 2px 7px; border-radius: 999px;
+    }
+    .att-chip svg { width: 11px; height: 11px; }
+
+    .status-chip {
+      display: inline-block;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+      padding: 3px 9px; border-radius: 999px; text-transform: uppercase;
+    }
+    .st-green  { background: var(--green-soft);  color: var(--green); }
+    .st-amber  { background: var(--amber-soft);  color: var(--amber-ink); }
+    .st-blue   { background: var(--blue-soft);   color: var(--blue); }
+    .st-violet { background: var(--violet-soft); color: var(--violet); }
+
+    .mini-btn {
+      border: none; border-radius: 10px;
+      padding: 9px 14px;
+      font-weight: 700; font-size: 13px;
+      flex-shrink: 0;
+    }
+    .mini-danger { background: var(--red-soft); color: var(--red); }
+    .mini-danger:active { background: #FBD9DD; }
+
+    .empty { padding: 30px 20px; text-align: center; color: #9AA1AA; }
+    .empty svg { width: 26px; height: 26px; margin-bottom: 8px; color: #C2C7CE; }
+    .empty-title { font-weight: 600; font-size: 14px; color: var(--muted); }
+    .empty-hint { font-size: 12px; margin-top: 3px; }
+
+    /* ---- forms ---- */
+    .form { padding: 16px; }
+    .f-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px 2px; }
+    .input, select.input, textarea.input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      font-size: 16px;
+      font-family: inherit;
+      background: #FCFCFA;
+      color: var(--text);
+      margin-bottom: 14px;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .input:focus { border-color: var(--amber); background: #fff; }
+    .input.mono { font-family: var(--mono); font-weight: 600; letter-spacing: 0.02em; }
+    select.input {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2369707A' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 13px center;
+      padding-right: 38px;
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .btn {
+      width: 100%;
+      padding: 15px 18px;
+      border: none; border-radius: 14px;
+      font-weight: 700; font-size: 15px;
+      display: flex; align-items: center; justify-content: center; gap: 9px;
+      transition: transform 0.1s ease;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.65; transform: none; }
+    .btn svg { width: 18px; height: 18px; }
+    .btn-amber  { background: var(--amber); color: #fff; box-shadow: 0 4px 14px rgba(232,145,12,0.3); }
+    .btn-blue   { background: var(--blue);  color: #fff; }
+    .btn-danger { background: var(--red-soft); color: var(--red); }
+    .btn-ghost  { background: #EEEEE8; color: var(--steel); }
+
+    .spin { animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---- attachments picker ---- */
+    .att-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px;
+      margin-bottom: 14px;
+    }
+    .att-tile {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 13px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #F7F7F2;
+    }
+    .att-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .att-tile .att-doc {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      color: var(--steel); padding: 4px;
+    }
+    .att-tile .att-doc svg { width: 20px; height: 20px; }
+    .att-tile .att-doc span {
+      font-family: var(--mono); font-size: 8.5px; font-weight: 700;
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .att-x {
+      position: absolute; top: 4px; right: 4px;
+      width: 21px; height: 21px; border-radius: 999px;
+      background: rgba(21,25,30,0.78);
+      border: none; color: #fff;
+      display: grid; place-items: center;
+    }
+    .att-x svg { width: 11px; height: 11px; }
+    .att-add {
+      aspect-ratio: 1;
+      border: 1.5px dashed #C9CDD3;
+      border-radius: 13px;
+      background: transparent;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      color: var(--muted);
+      font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .att-add svg { width: 19px; height: 19px; }
+    .att-add:active { background: var(--amber-soft); border-color: var(--amber); color: var(--amber-ink); }
+    .att-counter { font-size: 11px; color: #9AA1AA; font-weight: 600; margin: -6px 2px 12px; }
+
+    /* ---- segmented ---- */
+    .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #E8E8E1; border-radius: 13px; padding: 4px; margin-bottom: 14px; }
+    .seg button {
+      border: none; border-radius: 10px;
+      padding: 10px 0;
+      font-family: var(--mono); font-weight: 700; font-size: 13px;
+      background: transparent; color: var(--muted);
+    }
+    .seg button.on { background: var(--ink); color: #fff; }
+
+    .pmi-count-box {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--amber-soft);
+      border: 1px solid #F3DFB8;
+      border-radius: 13px;
+      padding: 13px 16px;
+      margin-bottom: 14px;
+    }
+    .pmi-count-box .lbl { font-size: 12px; font-weight: 600; color: var(--amber-ink); }
+    .pmi-count-box .num { font-family: var(--disp); font-size: 30px; font-weight: 700; color: var(--amber-ink); }
+
+    /* ---- reports ---- */
+    .report-btn {
+      width: 100%;
+      display: flex; align-items: center; gap: 13px;
+      background: var(--card);
+      border: none; border-bottom: 1px solid var(--line);
+      padding: 15px 16px;
+      text-align: left;
+    }
+    .report-btn:last-child { border-bottom: none; }
+    .report-btn:active { background: #FAFAF6; }
+    .rb-title { font-weight: 600; font-size: 14px; }
+    .rb-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .report-btn .chev { margin-left: auto; color: #B6BCC4; width: 18px; height: 18px; }
+
+    /* ---- tab bar ---- */
+    .tab-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      max-width: 480px; margin: 0 auto;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--line);
+      display: flex;
+      padding-bottom: env(safe-area-inset-bottom);
+      z-index: 90;
+    }
+    .tab {
+      flex: 1; position: relative;
+      padding: 10px 0 9px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 700;
+      color: #9AA1AA;
+      background: none; border: none;
+    }
+    .tab svg { width: 21px; height: 21px; }
+    .tab.active { color: var(--amber-ink); }
+    .tab.active::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 22px; height: 3px; border-radius: 0 0 3px 3px;
+      background: var(--amber);
+    }
+
+    /* ---- sheets ---- */
+    .overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(13,16,20,0.55);
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .overlay.open { opacity: 1; pointer-events: auto; }
+    .sheet {
+      width: 100%; max-width: 480px;
+      background: var(--card);
+      border-radius: 24px 24px 0 0;
+      padding: 10px 20px calc(22px + env(safe-area-inset-bottom));
+      transform: translateY(100%);
+      transition: transform 0.26s cubic-bezier(0.32, 0.72, 0.2, 1);
+      max-height: 88vh;
+      overflow-y: auto;
+    }
+    .overlay.open .sheet { transform: none; }
+    .grab { width: 38px; height: 4px; border-radius: 999px; background: #DDDDD5; margin: 4px auto 16px; }
+
+    /* PIN pad */
+    .pin-head { display: flex; align-items: center; gap: 13px; margin-bottom: 6px; }
+    .pin-name { font-weight: 700; font-size: 16px; }
+    .pin-role { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .pin-close { margin-left: auto; width: 34px; height: 34px; border-radius: 10px; background: #F1F1EC; border: none; color: var(--muted); display: grid; place-items: center; }
+    .pin-close svg { width: 16px; height: 16px; }
+
+    .pin-prompt { text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 14px 0 14px; }
+    .pin-dots { display: flex; justify-content: center; gap: 16px; margin-bottom: 6px; }
+    .pin-dot { width: 13px; height: 13px; border-radius: 999px; border: 2px solid #C9CDD3; transition: all 0.12s ease; }
+    .pin-dot.fill { background: var(--ink); border-color: var(--ink); }
+    .pin-dots.bad .pin-dot { background: var(--red); border-color: var(--red); }
+    .pin-dots.shake { animation: shake 0.4s ease; }
+    @keyframes shake {
+      20% { transform: translateX(-9px); } 40% { transform: translateX(8px); }
+      60% { transform: translateX(-6px); } 80% { transform: translateX(4px); }
+    }
+    .pin-error { text-align: center; font-size: 12px; font-weight: 600; color: var(--red); height: 18px; margin-bottom: 6px; }
+
+    .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .pad button {
+      height: 60px; border: none; border-radius: 15px;
+      background: #F3F3EE;
+      font-family: var(--disp); font-size: 23px; font-weight: 600; color: var(--ink);
+      display: grid; place-items: center;
+      transition: transform 0.08s ease, background 0.08s ease;
+    }
+    .pad button:active { transform: scale(0.94); background: var(--amber-soft); }
+    .pad button.ghost { background: transparent; }
+    .pad button svg { width: 22px; height: 22px; color: var(--muted); }
+
+    /* confirm */
+    .cf-title { font-family: var(--disp); font-size: 19px; font-weight: 700; margin-bottom: 6px; }
+    .cf-body { font-size: 14px; color: var(--muted); line-height: 1.5; margin-bottom: 18px; }
+    .cf-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* report sheet */
+    .rp-title { font-family: var(--disp); font-size: 19px; font-weight: 700; }
+    .rp-meta { font-size: 12px; color: var(--muted); margin: 3px 0 14px; }
+    .rp-pre {
+      background: #F7F7F2;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 14px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 42vh;
+      overflow-y: auto;
+      margin-bottom: 14px;
+      color: var(--steel);
+    }
+    .rp-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* detail sheet */
+    .dt-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+    .dt-id { font-family: var(--mono); font-size: 20px; font-weight: 700; }
+    .dt-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .dt-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      margin-bottom: 14px;
+    }
+    .dt-cell { background: #F7F7F2; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+    .dt-k { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #9AA1AA; }
+    .dt-v { font-size: 14px; font-weight: 600; margin-top: 2px; word-break: break-word; }
+    .dt-v.mono { font-family: var(--mono); }
+    .dt-note { background: var(--amber-soft); border: 1px solid #F3DFB8; border-radius: 12px; padding: 11px 13px; font-size: 13px; color: var(--amber-ink); margin-bottom: 14px; }
+
+    .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 8px; }
+    .g-tile {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 13px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #F7F7F2;
+      padding: 0;
+    }
+    .g-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .g-tile .att-doc {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+      color: var(--steel); padding: 6px;
+    }
+    .g-tile .att-doc svg { width: 22px; height: 22px; }
+    .g-tile .att-doc span {
+      font-family: var(--mono); font-size: 9px; font-weight: 700;
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .g-loading { padding: 22px; text-align: center; color: #9AA1AA; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .g-loading svg { width: 16px; height: 16px; }
+
+    /* fullscreen viewer */
+    .viewer {
+      position: fixed; inset: 0; z-index: 400;
+      background: rgba(8,10,13,0.96);
+      display: none;
+      flex-direction: column;
+    }
+    .viewer.open { display: flex; }
+    .viewer-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+      color: #fff;
+    }
+    .viewer-name { font-family: var(--mono); font-size: 12px; font-weight: 700; color: #C7CCD3; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .viewer-bar .h-actions { margin-left: auto; }
+    .viewer-body {
+      flex: 1;
+      display: grid; place-items: center;
+      padding: 10px 14px calc(24px + env(safe-area-inset-bottom));
+      min-height: 0;
+    }
+    .viewer-body img { max-width: 100%; max-height: 100%; border-radius: 10px; object-fit: contain; }
+
+    /* toast */
+    #toast-root {
+      position: fixed; left: 0; right: 0;
+      bottom: calc(78px + env(safe-area-inset-bottom));
+      display: flex; justify-content: center;
+      z-index: 500; pointer-events: none;
+      padding: 0 20px;
+    }
+    .toast {
+      display: flex; align-items: center; gap: 9px;
+      background: var(--ink); color: #fff;
+      padding: 12px 18px; border-radius: 14px;
+      font-size: 14px; font-weight: 600;
+      box-shadow: 0 10px 30px rgba(13,16,20,0.3);
+      animation: toast-in 0.25s ease;
+      max-width: 100%;
+    }
+    .toast svg { width: 17px; height: 17px; flex-shrink: 0; }
+    .toast.ok svg { color: #34D178; }
+    .toast.err { background: var(--red); }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- ============ LOGIN ============ -->
+    <div id="login-screen">
+      <div class="login-hero">
+        <div class="monogram"><i data-lucide="hard-hat"></i></div>
+        <div class="login-title">GCS BUILDINGS</div>
+        <div class="login-sub">SRL FALL PROTECTION LOG</div>
+        <div class="login-sites">
+          <span class="site-chip">GCS-A</span>
+          <span class="site-chip">GCS-B</span>
+          <span class="site-chip">PMI</span>
+        </div>
+      </div>
+      <div class="hazard"></div>
+      <div class="login-body">
+        <div class="eyebrow">Site access</div>
+        <div class="login-hint">Select your name to sign in.</div>
+        <div id="user-list"></div>
+        <div class="login-foot">Authorized personnel only · GCS Buildings</div>
+      </div>
+    </div>
+
+    <!-- ============ MAIN APP ============ -->
+    <div id="main-app" style="display:none;">
+
+      <div class="header">
+        <div class="monogram-sm"><i data-lucide="hard-hat"></i></div>
+        <div>
+          <div class="h-title">GCS BUILDINGS</div>
+          <div class="h-user" id="header-user"></div>
+        </div>
+        <div class="h-actions">
+          <button class="sync-pill off" id="sync-pill" onclick="refreshData()" aria-label="Sync status — tap to refresh">
+            <span class="sync-dot"></span><span id="sync-text">…</span>
+          </button>
+          <button class="icon-btn" onclick="showScreen('search')" aria-label="Search history">
+            <i data-lucide="search"></i>
+          </button>
+          <button class="icon-btn" onclick="logout()" aria-label="Log out">
+            <i data-lucide="log-out"></i>
+          </button>
+        </div>
+      </div>
+      <div class="hazard"></div>
+
+      <!-- DASHBOARD -->
+      <div id="screen-dashboard" class="screen active">
+        <div class="dash-date"><span class="eyebrow" id="dash-date"></span></div>
+
+        <div class="stat-grid">
+          <button class="stat-card" onclick="showScreen('installed')">
+            <div class="stat-ico ico-green"><i data-lucide="list-checks"></i></div>
+            <div class="stat-label">Installed now</div>
+            <div id="stat-installed" class="stat-value">0</div>
+          </button>
+          <button class="stat-card" onclick="showScreen('shack')">
+            <div class="stat-ico ico-amber"><i data-lucide="warehouse"></i></div>
+            <div class="stat-label">GCS-A shack</div>
+            <div id="stat-shack-a" class="stat-value">0</div>
+          </button>
+          <button class="stat-card" onclick="showScreen('shack')">
+            <div class="stat-ico ico-amber"><i data-lucide="warehouse"></i></div>
+            <div class="stat-label">GCS-B shack</div>
+            <div id="stat-shack-b" class="stat-value">0</div>
+          </button>
+          <button class="stat-card" onclick="showScreen('search')">
+            <div class="stat-ico ico-blue"><i data-lucide="history"></i></div>
+            <div class="stat-label">Total logs</div>
+            <div id="stat-total" class="stat-value">0</div>
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="section-header">
+            <i data-lucide="activity" style="color: var(--amber);"></i>
+            <span>Recent activity</span>
+          </div>
+          <div id="recent-list"></div>
+        </div>
+      </div>
+
+      <!-- INSTALL -->
+      <div id="screen-install" class="screen">
+        <div class="card">
+          <div class="section-header">
+            <i data-lucide="package-plus" style="color: var(--green);"></i>
+            <span>Install SRL</span>
+          </div>
+          <div class="form">
+            <label class="f-label" for="f-srl">SRL ID *</label>
+            <input id="f-srl" class="input mono" placeholder="e.g. SRL-0481" autocapitalize="characters" autocomplete="off">
+
+            <div class="grid-2">
+              <div>
+                <label class="f-label" for="f-hivis">Hivis # *</label>
+                <input id="f-hivis" class="input mono" placeholder="e.g. H-12" autocapitalize="characters" autocomplete="off">
+              </div>
+              <div>
+                <label class="f-label" for="f-column">Column *</label>
+                <input id="f-column" class="input mono" placeholder="e.g. C-4" autocapitalize="characters" autocomplete="off">
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div>
+                <label class="f-label" for="f-building">Building</label>
+                <select id="f-building" class="input">
+                  <option>GCS-A</option><option>GCS-B</option>
+                </select>
+              </div>
+              <div>
+                <label class="f-label" for="f-level">Level</label>
+                <select id="f-level" class="input">
+                  <option>Ground Level</option>
+                  <option>Mezzanine Level</option>
+                  <option>Rooftop</option>
+                </select>
+              </div>
+            </div>
+
+            <label class="f-label">Photos & files</label>
+            <div class="att-grid" id="att-grid"></div>
+            <div class="att-counter" id="att-counter"></div>
+
+            <label class="f-label" for="f-note">Notes (optional)</label>
+            <textarea id="f-note" class="input" rows="2" placeholder="Anything worth flagging…"></textarea>
+
+            <button onclick="installSRL()" class="btn btn-amber" id="btn-install">
+              <i data-lucide="check"></i> Confirm installation
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSTALLED -->
+      <div id="screen-installed" class="screen">
+        <div class="card">
+          <div class="section-header">
+            <i data-lucide="list-checks" style="color: var(--green);"></i>
+            <span>Installed SRLs</span>
+            <span id="installed-count" class="count-chip chip-green">0</span>
+          </div>
+          <div style="padding: 12px 16px 0;">
+            <input id="installed-filter" class="input mono" placeholder="Filter by ID, column, hivis…" oninput="renderInstalled()" autocomplete="off">
+          </div>
+          <div id="installed-list"></div>
+        </div>
+      </div>
+
+      <!-- PMI -->
+      <div id="screen-pmi" class="screen">
+        <div class="seg" role="group" aria-label="Building">
+          <button id="seg-gcs-a" class="on" onclick="setPmiBuilding('GCS-A')">GCS-A</button>
+          <button id="seg-gcs-b" onclick="setPmiBuilding('GCS-B')">GCS-B</button>
+        </div>
+
+        <div class="card">
+          <div class="section-header">
+            <i data-lucide="arrow-down-to-line" style="color: var(--blue);"></i>
+            <span>Receive from PMI</span>
+          </div>
+          <div class="form">
+            <label class="f-label" for="pmi-batch">Batch ID</label>
+            <input id="pmi-batch" class="input mono" placeholder="e.g. PMI-0611" autocapitalize="characters" autocomplete="off">
+            <label class="f-label" for="pmi-qty">Quantity</label>
+            <input id="pmi-qty" class="input" type="number" inputmode="numeric" min="1" value="1">
+            <button onclick="receiveFromPMI()" class="btn btn-blue">
+              <i data-lucide="arrow-down-to-line"></i> Confirm receipt
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-header">
+            <i data-lucide="arrow-up-from-line" style="color: var(--red);"></i>
+            <span>Return to PMI</span>
+          </div>
+          <div class="form">
+            <div class="pmi-count-box">
+              <span class="lbl">Units in <span id="pmi-bld-label">GCS-A</span> shack</span>
+              <span class="num" id="pmi-count">0</span>
+            </div>
+            <button onclick="returnToPMI()" class="btn btn-danger">
+              <i data-lucide="arrow-up-from-line"></i> Return all to PMI
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHACK -->
+      <div id="screen-shack" class="screen">
+        <div class="card">
+          <div class="section-header">
+            <i data-lucide="warehouse" style="color: var(--amber-ink);"></i>
+            <span>GCS-A shack</span>
+            <span id="shack-a-count" class="count-chip chip-amber">0</span>
+          </div>
+          <div id="shack-a-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="section-header">
+            <i data-lucide="warehouse" style="color: var(--amber-ink);"></i>
+            <span>GCS-B shack</span>
+            <span id="shack-b-count" class="count-chip chip-amber">0</span>
+          </div>
+          <div id="shack-b-list"></div>
+        </div>
+      </div>
+
+      <!-- REPORTS -->
+      <div id="screen-reports" class="screen">
+        <div class="card">
+          <div class="section-header">
+            <i data-lucide="printer" style="color: var(--steel);"></i>
+            <span>Reports</span>
+          </div>
+          <button class="report-btn" onclick="openReport('installed')">
+            <div class="row-ico ico-green"><i data-lucide="list-checks"></i></div>
+            <div><div class="rb-title">Installed SRLs</div><div class="rb-sub">Everything currently on the steel</div></div>
+            <i data-lucide="chevron-right" class="chev"></i>
+          </button>
+          <button class="report-btn" onclick="openReport('shack')">
+            <div class="row-ico ico-amber"><i data-lucide="warehouse"></i></div>
+            <div><div class="rb-title">Shack inventory</div><div class="rb-sub">Units staged in each building</div></div>
+            <i data-lucide="chevron-right" class="chev"></i>
+          </button>
+          <button class="report-btn" onclick="openReport('full')">
+            <div class="row-ico ico-blue"><i data-lucide="history"></i></div>
+            <div><div class="rb-title">Full activity log</div><div class="rb-sub">Every movement, newest first</div></div>
+            <i data-lucide="chevron-right" class="chev"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- SEARCH / HISTORY -->
+      <div id="screen-search" class="screen">
+        <input id="search-input" class="input mono" placeholder="Search ID, hivis, column, name…" oninput="runSearch()" autocomplete="off">
+        <div class="card">
+          <div class="section-header">
+            <i data-lucide="history" style="color: var(--blue);"></i>
+            <span>History</span>
+          </div>
+          <div id="search-results"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Hidden pickers -->
+  <input type="file" id="file-img" accept="image/*" multiple hidden>
+  <input type="file" id="file-any" hidden>
+
+  <!-- ============ PIN SHEET ============ -->
+  <div class="overlay" id="pin-overlay">
+    <div class="sheet">
+      <div class="grab"></div>
+      <div class="pin-head">
+        <div class="avatar" id="pin-avatar">–</div>
+        <div>
+          <div class="pin-name" id="pin-name"></div>
+          <div class="pin-role" id="pin-role"></div>
+        </div>
+        <button class="pin-close" onclick="closePin()" aria-label="Cancel"><i data-lucide="x"></i></button>
+      </div>
+      <div class="pin-prompt">Enter your 4-digit PIN</div>
+      <div class="pin-dots" id="pin-dots">
+        <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+      </div>
+      <div class="pin-error" id="pin-error"></div>
+      <div class="pad">
+        <button onclick="pinKey(1)">1</button>
+        <button onclick="pinKey(2)">2</button>
+        <button onclick="pinKey(3)">3</button>
+        <button onclick="pinKey(4)">4</button>
+        <button onclick="pinKey(5)">5</button>
+        <button onclick="pinKey(6)">6</button>
+        <button onclick="pinKey(7)">7</button>
+        <button onclick="pinKey(8)">8</button>
+        <button onclick="pinKey(9)">9</button>
+        <button class="ghost" aria-hidden="true" tabindex="-1"></button>
+        <button onclick="pinKey(0)">0</button>
+        <button class="ghost" onclick="pinBack()" aria-label="Delete digit"><i data-lucide="delete"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CONFIRM SHEET ============ -->
+  <div class="overlay" id="confirm-overlay">
+    <div class="sheet">
+      <div class="grab"></div>
+      <div class="cf-title" id="confirm-title"></div>
+      <div class="cf-body" id="confirm-body"></div>
+      <div class="cf-actions">
+        <button class="btn btn-ghost" id="confirm-cancel">Cancel</button>
+        <button class="btn btn-danger" id="confirm-ok">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ REPORT SHEET ============ -->
+  <div class="overlay" id="report-overlay">
+    <div class="sheet">
+      <div class="grab"></div>
+      <div class="rp-title" id="report-title"></div>
+      <div class="rp-meta" id="report-meta"></div>
+      <div class="rp-pre" id="report-pre"></div>
+      <div class="rp-actions">
+        <button class="btn btn-ghost" onclick="copyReport()"><i data-lucide="copy"></i> Copy</button>
+        <button class="btn btn-amber" id="report-share-btn" onclick="shareReport()"><i data-lucide="share-2"></i> Share</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ENTRY DETAIL SHEET ============ -->
+  <div class="overlay" id="detail-overlay">
+    <div class="sheet">
+      <div class="grab"></div>
+      <div id="detail-content"></div>
+    </div>
+  </div>
+
+  <!-- ============ FULLSCREEN VIEWER ============ -->
+  <div class="viewer" id="viewer">
+    <div class="viewer-bar">
+      <span class="viewer-name" id="viewer-name"></span>
+      <div class="h-actions">
+        <button class="icon-btn" id="viewer-share" aria-label="Share"><i data-lucide="share-2"></i></button>
+        <button class="icon-btn" onclick="closeViewer()" aria-label="Close"><i data-lucide="x"></i></button>
+      </div>
+    </div>
+    <div class="viewer-body" onclick="closeViewer()">
+      <img id="viewer-img" alt="">
+    </div>
+  </div>
+
+  <div id="toast-root"></div>
+
+  <div class="tab-bar" id="tab-bar">
+    <button class="tab active" data-screen="dashboard" onclick="showScreen('dashboard')"><i data-lucide="home"></i><span>Home</span></button>
+    <button class="tab" data-screen="install" onclick="showScreen('install')"><i data-lucide="package-plus"></i><span>Install</span></button>
+    <button class="tab" data-screen="pmi" onclick="showScreen('pmi')"><i data-lucide="truck"></i><span>PMI</span></button>
+    <button class="tab" data-screen="shack" onclick="showScreen('shack')"><i data-lucide="warehouse"></i><span>Shack</span></button>
+    <button class="tab" data-screen="reports" onclick="showScreen('reports')"><i data-lucide="printer"></i><span>Reports</span></button>
+  </div>
+
+  <script>
+    // ================== CONFIG ==================
+    const SUPA_URL = "https://bjnkgxkcbbnbtazelsjs.supabase.co";
+    const SUPA_KEY = "sb_publishable_F49fzNl_CTWUdJy5ZdMDMw_MFrIOXw-";
+    const BUILDINGS = ["GCS-A", "GCS-B"];
+    const MAX_ATT = 8;                       // attachments per entry
+    const MAX_FILE = 2.5 * 1024 * 1024;      // 2.5 MB per non-photo file
+    const IMG_MAX_DIM = 1280;                // photo longest side after compression
+    const IMG_QUALITY = 0.6;
+
+    const USERS = [
+      { name: "Cristian Lopez", role: "Inventory Manager", building: null,    code: "1111", av: "av-amber" },
+      { name: "Genaro Collazo", role: "QC",                building: "GCS-A", code: "2222", av: "av-blue"  },
+      { name: "Isaias Alfaro",  role: "General Foreman",   building: "GCS-A", code: "3333", av: "av-green" },
+      { name: "Antonio Chavez", role: "QC",                building: "GCS-B", code: "4444", av: "av-blue"  },
+      { name: "Manuel Morales", role: "General Foreman",   building: "GCS-B", code: "5555", av: "av-green" }
+    ];
+
+    const STATUS = {
+      "installed":    { label: "Installed", chip: "st-green",  ico: "arrow-down-to-line", icoCls: "ico-green"  },
+      "removed":      { label: "To shack",  chip: "st-amber",  ico: "undo-2",             icoCls: "ico-amber"  },
+      "pmi-received": { label: "From PMI",  chip: "st-blue",   ico: "truck",              icoCls: "ico-blue"   },
+      "pmi-returned": { label: "To PMI",    chip: "st-violet", ico: "truck",              icoCls: "ico-violet" }
+    };
+
+    // ================== STATE ==================
+    let currentUser = null;
+    let inventory = [];
+    let shackData = { "GCS-A": [], "GCS-B": [] };
+    let pmiBuilding = "GCS-A";
+    let pendingSync = false;
+    let newAtts = [];                 // attachments staged on the Install form
+    let pendingAtts = [];             // attachment rows that failed to upload (retry later)
+    const attCache = new Map();       // fetched attachment data, by id
+
+    // Safe storage (falls back to memory if localStorage is blocked, e.g. in previews)
+    const store = (() => {
+      try {
+        const t = "__t"; localStorage.setItem(t, t); localStorage.removeItem(t);
+        return localStorage;
+      } catch (e) {
+        const m = {};
+        return { getItem: k => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, removeItem: k => { delete m[k]; } };
+      }
+    })();
+
+    // ================== BUILT-IN ICONS (no internet needed) ==================
+    const ICONS = {
+      "activity": '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+      "alert-triangle": '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+      "arrow-down-to-line": '<path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/>',
+      "arrow-up-from-line": '<path d="m18 9-6-6-6 6"/><path d="M12 3v14"/><path d="M5 21h14"/>',
+      "camera": '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+      "check": '<path d="M20 6 9 17l-5-5"/>',
+      "check-circle-2": '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+      "chevron-right": '<path d="m9 18 6-6-6-6"/>',
+      "cloud-off": '<path d="M22.61 16.95A5 5 0 0 0 18 10h-1.26a8 8 0 0 0-7.05-6"/><path d="M5 5a8 8 0 0 0 4 15h9a5 5 0 0 0 1.7-.3"/><path d="m1 1 22 22"/>',
+      "copy": '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+      "delete": '<path d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/><path d="m18 9-6 6"/><path d="m12 9 6 6"/>',
+      "file-text": '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>',
+      "hard-hat": '<path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1Z"/><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><path d="M14 6a6 6 0 0 1 6 6v3"/>',
+      "history": '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+      "home": '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+      "list-checks": '<path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>',
+      "loader-2": '<path d="M21 12a9 9 0 1 1-6.219-8.56"/>',
+      "log-out": '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+      "package": '<path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.29 7 12 12l8.71-5"/><path d="M12 22V12"/>',
+      "package-plus": '<path d="M16 16h6"/><path d="M19 13v6"/><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/><path d="M16.5 9.4 7.55 4.24"/><path d="M3.29 7 12 12l8.71-5"/><path d="M12 22V12"/>',
+      "paperclip": '<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+      "printer": '<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
+      "search": '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+      "share-2": '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/>',
+      "truck": '<rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+      "undo-2": '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+      "warehouse": '<path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35a2 2 0 0 1 1.26-1.86l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z"/><path d="M6 18h12"/><path d="M6 14h12"/><path d="M6 10h12"/>',
+      "x": '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'
+    };
+
+    function renderIcons(root) {
+      (root || document).querySelectorAll("i[data-lucide]").forEach(el => {
+        const name = el.getAttribute("data-lucide");
+        const body = ICONS[name];
+        if (!body) { el.removeAttribute("data-lucide"); return; }
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("width", "24");
+        svg.setAttribute("height", "24");
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "2");
+        svg.setAttribute("stroke-linecap", "round");
+        svg.setAttribute("stroke-linejoin", "round");
+        svg.setAttribute("aria-hidden", "true");
+        if (el.className) svg.setAttribute("class", el.className);
+        const st = el.getAttribute("style");
+        if (st) svg.setAttribute("style", st);
+        svg.innerHTML = body;
+        el.replaceWith(svg);
+      });
+    }
+
+    // ================== HELPERS ==================
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const first = n => String(n || "").split(" ")[0];
+    const icons = () => renderIcons();
+    const newId = p => p + "_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+
+    function fmtTime(ts) {
+      const d = new Date(ts);
+      if (isNaN(d)) return "";
+      return d.toLocaleDateString([], { month: "short", day: "numeric" }) + " · " +
+             d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    }
+
+    function showToast(msg, error = false) {
+      const root = $("toast-root");
+      root.innerHTML = "";
+      const t = document.createElement("div");
+      t.className = "toast " + (error ? "err" : "ok");
+      t.innerHTML = `<i data-lucide="${error ? "alert-triangle" : "check-circle-2"}"></i><span>${esc(msg)}</span>`;
+      root.appendChild(t);
+      icons();
+      setTimeout(() => { if (t.parentNode) t.remove(); }, 2800);
+    }
+
+    function setSync(mode, text) {
+      const pill = $("sync-pill");
+      pill.className = "sync-pill " + mode;
+      $("sync-text").textContent = text;
+    }
+
+    // Confirm sheet (promise-based)
+    let confirmResolve = null;
+    function askConfirm(title, body, okLabel) {
+      $("confirm-title").textContent = title;
+      $("confirm-body").textContent = body;
+      $("confirm-ok").textContent = okLabel || "Confirm";
+      $("confirm-overlay").classList.add("open");
+      return new Promise(res => { confirmResolve = res; });
+    }
+    function closeConfirm(answer) {
+      $("confirm-overlay").classList.remove("open");
+      if (confirmResolve) { confirmResolve(answer); confirmResolve = null; }
+    }
+
+    function dataURLtoBlob(dataUrl) {
+      const [head, body] = dataUrl.split(",");
+      const mime = (head.match(/data:(.*?);/) || [])[1] || "application/octet-stream";
+      const bin = atob(body);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return new Blob([arr], { type: mime });
+    }
+
+    // ================== PERSISTENCE ==================
+    function cacheState() {
+      try { store.setItem("gcs_cache", JSON.stringify({ inv: inventory, shack: shackData })); } catch (e) {}
+    }
+
+    function hydrateFromCache() {
+      try {
+        const raw = store.getItem("gcs_cache");
+        if (!raw) return;
+        const d = JSON.parse(raw);
+        if (d && Array.isArray(d.inv)) {
+          inventory = d.inv;
+          shackData = d.shack || { "GCS-A": [], "GCS-B": [] };
+        }
+      } catch (e) {}
+    }
+
+    async function loadFromSupabase() {
+      setSync("busy", "Syncing");
+      const res = await fetch(`${SUPA_URL}/rest/v1/app_state?id=eq.main&select=data`, {
+        headers: { "apikey": SUPA_KEY, "Authorization": `Bearer ${SUPA_KEY}` }
+      });
+      if (!res.ok) throw new Error("load failed");
+      const data = await res.json();
+      if (data[0] && data[0].data) {
+        inventory = data[0].data.inv || [];
+        shackData = data[0].data.shack || { "GCS-A": [], "GCS-B": [] };
+      }
+      BUILDINGS.forEach(b => { if (!shackData[b]) shackData[b] = []; });
+      cacheState();
+      setSync("ok", "Synced");
+    }
+
+    async function saveToSupabase() {
+      cacheState();
+      setSync("busy", "Saving");
+      try {
+        await flushPendingAtts();
+        const res = await fetch(`${SUPA_URL}/rest/v1/app_state`, {
+          method: "POST",
+          headers: {
+            "apikey": SUPA_KEY,
+            "Authorization": `Bearer ${SUPA_KEY}`,
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates"
+          },
+          body: JSON.stringify({ id: "main", data: { inv: inventory, shack: shackData } })
+        });
+        if (!res.ok) throw new Error("save failed");
+        pendingSync = false;
+        setSync(pendingAtts.length ? "off" : "ok", pendingAtts.length ? "Files pending" : "Synced");
+      } catch (e) {
+        pendingSync = true;
+        setSync("off", "Offline");
+        showToast("Saved on this phone — will sync when back online", true);
+      }
+    }
+
+    async function refreshData() {
+      if (!currentUser) return;
+      try {
+        await flushPendingAtts();
+        if (pendingSync) {
+          await saveToSupabase();          // push local changes first
+        } else {
+          await loadFromSupabase();        // otherwise pull latest
+        }
+        renderAll();
+      } catch (e) {
+        setSync("off", "Offline");
+      }
+    }
+
+    // ================== ATTACHMENT STORAGE ==================
+    async function uploadAttRow(id, payload) {
+      const res = await fetch(`${SUPA_URL}/rest/v1/app_state`, {
+        method: "POST",
+        headers: {
+          "apikey": SUPA_KEY,
+          "Authorization": `Bearer ${SUPA_KEY}`,
+          "Content-Type": "application/json",
+          "Prefer": "resolution=merge-duplicates"
+        },
+        body: JSON.stringify({ id, data: payload })
+      });
+      if (!res.ok) throw new Error("attachment upload failed");
+    }
+
+    async function flushPendingAtts() {
+      if (!pendingAtts.length) return;
+      const still = [];
+      for (const item of pendingAtts) {
+        try { await uploadAttRow(item.id, item.data); }
+        catch (e) { still.push(item); }
+      }
+      pendingAtts = still;
+      if (!still.length) showToast("All files synced");
+    }
+
+    async function fetchAtts(ids) {
+      const need = ids.filter(id => !attCache.has(id));
+      if (need.length) {
+        const res = await fetch(`${SUPA_URL}/rest/v1/app_state?id=in.(${need.join(",")})&select=id,data`, {
+          headers: { "apikey": SUPA_KEY, "Authorization": `Bearer ${SUPA_KEY}` }
+        });
+        if (res.ok) {
+          const rows = await res.json();
+          rows.forEach(r => attCache.set(r.id, r.data));
+        }
+      }
+      return ids.map(id => ({ id, data: attCache.get(id) || null }));
+    }
+
+    // ================== IMAGE COMPRESSION ==================
+    function compressImage(file) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const scale = Math.min(1, IMG_MAX_DIM / Math.max(img.width, img.height));
+            const w = Math.max(1, Math.round(img.width * scale));
+            const h = Math.max(1, Math.round(img.height * scale));
+            const canvas = document.createElement("canvas");
+            canvas.width = w; canvas.height = h;
+            canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+            URL.revokeObjectURL(url);
+            resolve(canvas.toDataURL("image/jpeg", IMG_QUALITY));
+          } catch (e) { URL.revokeObjectURL(url); reject(e); }
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("not an image")); };
+        img.src = url;
+      });
+    }
+
+    function readAsDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = () => reject(new Error("read failed"));
+        r.readAsDataURL(file);
+      });
+    }
+
+    // ================== INSTALL FORM ATTACHMENTS ==================
+    function renderAttGrid() {
+      const grid = $("att-grid");
+      grid.innerHTML = "";
+
+      newAtts.forEach((a, i) => {
+        const tile = document.createElement("div");
+        tile.className = "att-tile";
+        if (a.kind === "img") {
+          tile.innerHTML = `<img src="${a.dataUrl}" alt="${esc(a.name)}">`;
+        } else {
+          const ext = (a.name.split(".").pop() || "FILE").toUpperCase().slice(0, 5);
+          tile.innerHTML = `<div class="att-doc"><i data-lucide="file-text"></i><span>${esc(ext)}</span></div>`;
+        }
+        const x = document.createElement("button");
+        x.className = "att-x";
+        x.setAttribute("aria-label", "Remove attachment");
+        x.innerHTML = `<i data-lucide="x"></i>`;
+        x.onclick = () => { newAtts.splice(i, 1); renderAttGrid(); };
+        tile.appendChild(x);
+        grid.appendChild(tile);
+      });
+
+      if (newAtts.length < MAX_ATT) {
+        const addP = document.createElement("button");
+        addP.className = "att-add";
+        addP.innerHTML = `<i data-lucide="camera"></i><span>Photos</span>`;
+        addP.onclick = () => $("file-img").click();
+        grid.appendChild(addP);
+
+        const addF = document.createElement("button");
+        addF.className = "att-add";
+        addF.innerHTML = `<i data-lucide="paperclip"></i><span>File</span>`;
+        addF.onclick = () => $("file-any").click();
+        grid.appendChild(addF);
+      }
+
+      $("att-counter").textContent = newAtts.length
+        ? `${newAtts.length} of ${MAX_ATT} attached — photos are compressed automatically`
+        : `Up to ${MAX_ATT} photos or files per installation`;
+      icons();
+    }
+
+    async function handlePickedFiles(fileList, asImage) {
+      const files = [...fileList];
+      for (const file of files) {
+        if (newAtts.length >= MAX_ATT) { showToast(`Limit is ${MAX_ATT} per entry`, true); break; }
+        try {
+          if (asImage || file.type.startsWith("image/")) {
+            const dataUrl = await compressImage(file);
+            newAtts.push({ name: file.name || "photo.jpg", type: "image/jpeg", kind: "img", dataUrl });
+          } else {
+            if (file.size > MAX_FILE) { showToast(`${file.name} is too big (max 2.5 MB)`, true); continue; }
+            const dataUrl = await readAsDataURL(file);
+            newAtts.push({ name: file.name || "file", type: file.type || "application/octet-stream", kind: "file", dataUrl });
+          }
+        } catch (e) {
+          showToast(`Couldn't read ${file.name || "that file"}`, true);
+        }
+      }
+      renderAttGrid();
+    }
+
+    // ================== CORE ==================
+    function getInstalled() {
+      const active = new Map();
+      [...inventory].reverse().forEach(e => {      // oldest → newest
+        if (e.status === "installed") active.set(e.srlId, e);
+        else if (e.status === "removed") active.delete(e.srlId);
+      });
+      return [...active.values()].reverse();        // newest first
+    }
+
+    function logEntry(extra) {
+      return { id: Date.now(), ts: new Date().toISOString(), by: currentUser ? currentUser.name : "", ...extra };
+    }
+
+    function metaLine(e) {
+      return [e.building, e.level, e.by ? "by " + first(e.by) : null].filter(Boolean).join(" · ");
+    }
+
+    function attChip(e) {
+      const n = (e.att || []).length;
+      return n ? `<span class="att-chip"><i data-lucide="paperclip"></i>${n}</span>` : "";
+    }
+
+    function entryRow(e) {
+      const st = STATUS[e.status] || { label: e.status, chip: "st-blue", ico: "activity", icoCls: "ico-blue" };
+      const d = document.createElement("button");
+      d.className = "row tap";
+      d.innerHTML = `
+        <div class="row-ico ${st.icoCls}"><i data-lucide="${st.ico}"></i></div>
+        <div class="row-main">
+          <div class="row-id">${esc(e.srlId)}</div>
+          <div class="row-meta"><span>${esc(metaLine(e))}</span>${attChip(e)}</div>
+        </div>
+        <div class="row-side">
+          <span class="status-chip ${st.chip}">${st.label}</span>
+          <div class="row-time">${fmtTime(e.ts)}</div>
+        </div>`;
+      d.onclick = () => openDetail(e);
+      return d;
+    }
+
+    function emptyState(icon, title, hint) {
+      return `<div class="empty"><i data-lucide="${icon}"></i><div class="empty-title">${title}</div><div class="empty-hint">${hint}</div></div>`;
+    }
+
+    // ================== RENDER ==================
+    function renderDashboard() {
+      $("dash-date").textContent = new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+      $("stat-installed").textContent = getInstalled().length;
+      $("stat-shack-a").textContent = (shackData["GCS-A"] || []).length;
+      $("stat-shack-b").textContent = (shackData["GCS-B"] || []).length;
+      $("stat-total").textContent = inventory.length;
+
+      const container = $("recent-list");
+      container.innerHTML = "";
+      const recent = inventory.slice(0, 6);
+
+      if (recent.length === 0) {
+        container.innerHTML = emptyState("activity", "No activity yet", "Movements will show up here as the crew logs them.");
+      } else {
+        recent.forEach(e => container.appendChild(entryRow(e)));
+      }
+      icons();
+    }
+
+    function renderInstalled() {
+      const container = $("installed-list");
+      container.innerHTML = "";
+      const q = ($("installed-filter").value || "").trim().toUpperCase();
+      const all = getInstalled();
+      $("installed-count").textContent = all.length;
+
+      const list = q
+        ? all.filter(e => [e.srlId, e.hivis, e.column, e.building, e.level].join(" ").toUpperCase().includes(q))
+        : all;
+
+      if (list.length === 0) {
+        container.innerHTML = q
+          ? emptyState("search", "No matches", "Try a different ID or clear the filter.")
+          : emptyState("package", "No SRLs installed", "Use the Install tab to log the first one.");
+        icons();
+        return;
+      }
+
+      list.forEach(e => {
+        const d = document.createElement("div");
+        d.className = "row tap";
+        d.style.cursor = "pointer";
+        const details = [e.building, e.level, e.column ? "Col " + e.column : null, e.hivis ? "Hivis " + e.hivis : null]
+          .filter(Boolean).join(" · ");
+        d.innerHTML = `
+          <div class="row-main">
+            <div class="row-id">${esc(e.srlId)}</div>
+            <div class="row-meta"><span>${esc(details)}</span>${attChip(e)}</div>
+            ${e.comment ? `<div class="row-note">${esc(e.comment)}</div>` : ""}
+          </div>`;
+        d.onclick = () => openDetail(e);
+        const btn = document.createElement("button");
+        btn.className = "mini-btn mini-danger";
+        btn.textContent = "Remove";
+        btn.onclick = ev => { ev.stopPropagation(); removeSRL(e.srlId, e.building); };
+        d.appendChild(btn);
+        container.appendChild(d);
+      });
+      icons();
+    }
+
+    function renderShack() {
+      BUILDINGS.forEach(b => {
+        const key = b === "GCS-A" ? "a" : "b";
+        const countEl = $("shack-" + key + "-count");
+        const listEl = $("shack-" + key + "-list");
+        const items = shackData[b] || [];
+
+        countEl.textContent = items.length;
+        listEl.innerHTML = "";
+
+        if (items.length === 0) {
+          listEl.innerHTML = emptyState("warehouse", "Empty", "Receive units from PMI to stage them here.");
+          return;
+        }
+
+        items.forEach(item => {
+          const d = document.createElement("div");
+          d.className = "row";
+          d.innerHTML = `
+            <div class="row-main"><div class="row-id">${esc(item.srlId)}</div></div>
+            <div class="row-time">${fmtTime(item.ts)}</div>`;
+          listEl.appendChild(d);
+        });
+      });
+      icons();
+    }
+
+    function renderPMI() {
+      $("seg-gcs-a").classList.toggle("on", pmiBuilding === "GCS-A");
+      $("seg-gcs-b").classList.toggle("on", pmiBuilding === "GCS-B");
+      $("pmi-bld-label").textContent = pmiBuilding;
+      $("pmi-count").textContent = (shackData[pmiBuilding] || []).length;
+    }
+
+    function runSearch() {
+      const q = ($("search-input").value || "").trim().toUpperCase();
+      const container = $("search-results");
+      container.innerHTML = "";
+
+      const results = inventory.filter(e =>
+        [e.srlId, e.hivis, e.column, e.by, e.building].join(" ").toUpperCase().includes(q)
+      ).slice(0, 200);
+
+      if (results.length === 0) {
+        container.innerHTML = emptyState("search", "No results", "Check the spelling or try fewer characters.");
+        icons();
+        return;
+      }
+      results.forEach(e => container.appendChild(entryRow(e)));
+      icons();
+    }
+
+    function renderAll() {
+      renderDashboard();
+      renderInstalled();
+      renderShack();
+      renderPMI();
+      runSearch();
+    }
+
+    // ================== ENTRY DETAIL ==================
+    async function openDetail(e) {
+      const st = STATUS[e.status] || { label: e.status, chip: "st-blue" };
+      const cells = [
+        ["Building", e.building], ["Level", e.level],
+        ["Column", e.column], ["Hivis", e.hivis],
+        ["Logged by", e.by], ["When", fmtTime(e.ts)]
+      ].filter(c => c[1]);
+
+      const c = $("detail-content");
+      c.innerHTML = `
+        <div class="dt-head">
+          <div class="row-main">
+            <div class="dt-id">${esc(e.srlId)}</div>
+            <div class="dt-sub">${esc(metaLine(e))}</div>
+          </div>
+          <span class="status-chip ${st.chip}">${st.label}</span>
+        </div>
+        <div class="dt-grid">
+          ${cells.map(x => `<div class="dt-cell"><div class="dt-k">${x[0]}</div><div class="dt-v ${x[0] === "Column" || x[0] === "Hivis" ? "mono" : ""}">${esc(x[1])}</div></div>`).join("")}
+        </div>
+        ${e.comment ? `<div class="dt-note">${esc(e.comment)}</div>` : ""}
+        ${(e.att && e.att.length) ? `
+          <div class="eyebrow">Attachments · ${e.att.length}</div>
+          <div class="gallery" id="detail-gallery">
+            <div class="g-loading" style="grid-column: 1 / -1;"><i data-lucide="loader-2" class="spin"></i> Loading files…</div>
+          </div>` : ""}
+      `;
+      $("detail-overlay").classList.add("open");
+      icons();
+
+      if (!e.att || !e.att.length) return;
+
+      const fetched = await fetchAtts(e.att.map(a => a.id));
+      const gal = $("detail-gallery");
+      if (!gal) return;
+      gal.innerHTML = "";
+
+      e.att.forEach((meta, i) => {
+        const data = fetched[i] && fetched[i].data;
+        const tile = document.createElement("button");
+        tile.className = "g-tile";
+        if (!data) {
+          tile.innerHTML = `<div class="att-doc"><i data-lucide="cloud-off"></i><span>Not synced</span></div>`;
+          tile.onclick = () => showToast("This file hasn't synced yet — try again online", true);
+        } else if ((meta.kind || data.kind) === "img" || String(data.type || "").startsWith("image/")) {
+          tile.innerHTML = `<img src="${data.dataUrl}" alt="${esc(meta.name || "photo")}">`;
+          tile.onclick = () => openViewer({ name: meta.name || data.name || "photo.jpg", type: data.type, dataUrl: data.dataUrl });
+        } else {
+          const ext = ((meta.name || data.name || "FILE").split(".").pop() || "FILE").toUpperCase().slice(0, 5);
+          tile.innerHTML = `<div class="att-doc"><i data-lucide="file-text"></i><span>${esc(ext)}</span></div>`;
+          tile.onclick = () => shareOrDownload({ name: meta.name || data.name || "file", type: data.type, dataUrl: data.dataUrl });
+        }
+        gal.appendChild(tile);
+      });
+      icons();
+    }
+
+    // ================== VIEWER ==================
+    let viewerAtt = null;
+
+    function openViewer(att) {
+      viewerAtt = att;
+      $("viewer-img").src = att.dataUrl;
+      $("viewer-name").textContent = att.name || "";
+      $("viewer").classList.add("open");
+    }
+
+    function closeViewer() {
+      $("viewer").classList.remove("open");
+      $("viewer-img").src = "";
+      viewerAtt = null;
+    }
+
+    async function shareOrDownload(att) {
+      try {
+        const blob = dataURLtoBlob(att.dataUrl);
+        const file = new File([blob], att.name || "file", { type: blob.type });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file] });
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = att.name || "file";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      } catch (e) {
+        if (e && e.name === "AbortError") return;   // user closed the share sheet
+        showToast("Couldn't open that file", true);
+      }
+    }
+
+    // ================== ACTIONS ==================
+    async function installSRL() {
+      const srlId = $("f-srl").value.trim().toUpperCase();
+      const hivis = $("f-hivis").value.trim().toUpperCase();
+      const column = $("f-column").value.trim().toUpperCase();
+      const building = $("f-building").value;
+      const level = $("f-level").value;
+      const note = $("f-note").value.trim();
+
+      if (!srlId || !hivis || !column) return showToast("Fill in SRL ID, Hivis and Column", true);
+      if (getInstalled().some(e => e.srlId === srlId)) return showToast(srlId + " is already installed", true);
+
+      const btn = $("btn-install");
+      btn.disabled = true;
+
+      // Upload attachments first (each as its own row), then log the entry
+      const attMeta = [];
+      const toUpload = [...newAtts];
+      for (let i = 0; i < toUpload.length; i++) {
+        const a = toUpload[i];
+        btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Uploading ${i + 1} of ${toUpload.length}…`;
+        icons();
+        const id = newId("att");
+        const payload = { name: a.name, type: a.type, kind: a.kind, dataUrl: a.dataUrl, srlId, entryTs: new Date().toISOString() };
+        attCache.set(id, payload);
+        try { await uploadAttRow(id, payload); }
+        catch (e) { pendingAtts.push({ id, data: payload }); }
+        attMeta.push({ id, name: a.name, kind: a.kind });
+      }
+
+      const entry = logEntry({ srlId, building, level, hivis, column, comment: note, status: "installed" });
+      if (attMeta.length) entry.att = attMeta;
+      inventory.unshift(entry);
+      if (shackData[building]) shackData[building] = shackData[building].filter(x => x.srlId !== srlId);
+
+      $("f-srl").value = ""; $("f-hivis").value = ""; $("f-column").value = ""; $("f-note").value = "";
+      newAtts = [];
+      renderAttGrid();
+
+      btn.disabled = false;
+      btn.innerHTML = `<i data-lucide="check"></i> Confirm installation`;
+      icons();
+
+      renderAll();
+      showScreen("installed");
+      showToast(srlId + " installed" + (attMeta.length ? ` with ${attMeta.length} file${attMeta.length > 1 ? "s" : ""}` : ""));
+      await saveToSupabase();
+    }
+
+    async function removeSRL(srlId, building) {
+      const ok = await askConfirm("Remove " + srlId + "?", "It will be taken off the installed list and returned to the " + building + " shack.", "Remove");
+      if (!ok) return;
+
+      inventory.unshift(logEntry({ srlId, building, level: "Shack", status: "removed" }));
+      if (!shackData[building]) shackData[building] = [];
+      shackData[building].unshift({ srlId, ts: new Date().toISOString() });
+
+      renderAll();
+      showToast(srlId + " returned to shack");
+      await saveToSupabase();
+    }
+
+    async function receiveFromPMI() {
+      const batch = $("pmi-batch").value.trim().toUpperCase();
+      const qty = Math.max(1, parseInt($("pmi-qty").value) || 1);
+      if (!batch) return showToast("Enter a Batch ID", true);
+
+      const building = pmiBuilding;
+      if (!shackData[building]) shackData[building] = [];
+
+      for (let i = 0; i < qty; i++) {
+        shackData[building].unshift({ srlId: `${batch}-${i + 1}`, ts: new Date().toISOString() });
+      }
+      inventory.unshift(logEntry({ srlId: `${batch} ×${qty}`, building, level: "PMI Trailer", status: "pmi-received" }));
+
+      $("pmi-batch").value = "";
+      $("pmi-qty").value = "1";
+
+      renderAll();
+      showToast(qty + " unit" + (qty > 1 ? "s" : "") + " received into " + building);
+      await saveToSupabase();
+    }
+
+    async function returnToPMI() {
+      const building = pmiBuilding;
+      const count = (shackData[building] || []).length;
+      if (count === 0) return showToast(building + " shack is empty", true);
+
+      const ok = await askConfirm("Return " + count + " unit" + (count > 1 ? "s" : "") + "?", "This clears the entire " + building + " shack and logs the return to PMI.", "Return all");
+      if (!ok) return;
+
+      inventory.unshift(logEntry({ srlId: `${count} units`, building, level: "PMI Trailer", status: "pmi-returned" }));
+      shackData[building] = [];
+
+      renderAll();
+      showToast(count + " returned to PMI");
+      await saveToSupabase();
+    }
+
+    function setPmiBuilding(b) {
+      pmiBuilding = b;
+      renderPMI();
+    }
+
+    // ================== REPORTS ==================
+    let reportText = "";
+
+    function buildReport(type) {
+      const pad = (s, n) => String(s ?? "").padEnd(n);
+      const lines = [];
+      let title = "";
+
+      if (type === "installed") {
+        const list = getInstalled();
+        title = "Installed SRLs";
+        lines.push(`INSTALLED SRLS — ${list.length} active`);
+        lines.push("─".repeat(34));
+        if (list.length === 0) lines.push("None installed.");
+        list.forEach(e => {
+          const det = [e.building, e.level, e.column ? "Col " + e.column : null, e.hivis ? "Hivis " + e.hivis : null].filter(Boolean).join(" · ");
+          const att = (e.att && e.att.length) ? ` · ${e.att.length} file${e.att.length > 1 ? "s" : ""}` : "";
+          lines.push(`${pad(e.srlId, 14)} ${det}${att}`);
+        });
+      } else if (type === "shack") {
+        title = "Shack inventory";
+        BUILDINGS.forEach(b => {
+          const items = shackData[b] || [];
+          lines.push(`${b} SHACK — ${items.length} unit${items.length === 1 ? "" : "s"}`);
+          lines.push("─".repeat(34));
+          if (items.length === 0) lines.push("Empty.");
+          items.forEach(i => lines.push(`${pad(i.srlId, 16)} ${fmtTime(i.ts)}`));
+          lines.push("");
+        });
+      } else {
+        title = "Full activity log";
+        lines.push(`FULL LOG — ${inventory.length} entries`);
+        lines.push("─".repeat(34));
+        if (inventory.length === 0) lines.push("No entries yet.");
+        inventory.forEach(e => {
+          const st = STATUS[e.status] ? STATUS[e.status].label : e.status;
+          lines.push(`${fmtTime(e.ts)}  ${pad(st, 10)} ${pad(e.srlId, 14)} ${[e.building, first(e.by)].filter(Boolean).join(" · ")}`);
+        });
+      }
+      return { title, text: lines.join("\n") };
+    }
+
+    function openReport(type) {
+      const r = buildReport(type);
+      reportText = "GCS BUILDINGS — SRL LOG\n" + r.title + "\nGenerated " + fmtTime(new Date().toISOString()) +
+                   (currentUser ? " by " + currentUser.name : "") + "\n\n" + r.text;
+      $("report-title").textContent = r.title;
+      $("report-meta").textContent = "Generated " + fmtTime(new Date().toISOString()) + (currentUser ? " · " + currentUser.name : "");
+      $("report-pre").textContent = r.text;
+      $("report-share-btn").style.display = navigator.share ? "flex" : "none";
+      $("report-overlay").classList.add("open");
+    }
+
+    async function copyReport() {
+      try {
+        await navigator.clipboard.writeText(reportText);
+        showToast("Report copied");
+      } catch (e) {
+        const ta = document.createElement("textarea");
+        ta.value = reportText;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); showToast("Report copied"); }
+        catch (err) { showToast("Couldn't copy on this device", true); }
+        ta.remove();
+      }
+    }
+
+    async function shareReport() {
+      try { await navigator.share({ title: "GCS SRL Log", text: reportText }); } catch (e) {}
+    }
+
+    // ================== NAVIGATION ==================
+    function showScreen(screen) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      const target = $("screen-" + screen);
+      if (target) target.classList.add("active");
+
+      document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.screen === screen));
+
+      if (screen === "dashboard") renderDashboard();
+      if (screen === "installed") renderInstalled();
+      if (screen === "shack") renderShack();
+      if (screen === "pmi") renderPMI();
+      if (screen === "search") runSearch();
+      window.scrollTo({ top: 0 });
+    }
+
+    // ================== AUTH / PIN ==================
+    let pinUser = null;
+    let pinValue = "";
+
+    const initials = n => n.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+
+    function renderLogin() {
+      const container = $("user-list");
+      container.innerHTML = "";
+      USERS.forEach(user => {
+        const btn = document.createElement("button");
+        btn.className = "user-btn";
+        btn.innerHTML = `
+          <div class="avatar ${user.av}">${initials(user.name)}</div>
+          <div>
+            <div class="user-name">${esc(user.name)}</div>
+            <div class="user-role">${esc(user.role)}${user.building ? " · " + user.building : ""}</div>
+          </div>
+          <i data-lucide="chevron-right" class="chev"></i>`;
+        btn.onclick = () => openPin(user);
+        container.appendChild(btn);
+      });
+      icons();
+    }
+
+    function openPin(user) {
+      pinUser = user;
+      pinValue = "";
+      $("pin-avatar").className = "avatar " + user.av;
+      $("pin-avatar").textContent = initials(user.name);
+      $("pin-name").textContent = user.name;
+      $("pin-role").textContent = user.role + (user.building ? " · " + user.building : "");
+      $("pin-error").textContent = "";
+      renderPinDots();
+      $("pin-overlay").classList.add("open");
+    }
+
+    function closePin() {
+      $("pin-overlay").classList.remove("open");
+      pinUser = null;
+      pinValue = "";
+    }
+
+    function renderPinDots(state) {
+      const dots = $("pin-dots");
+      dots.className = "pin-dots" + (state ? " " + state : "");
+      [...dots.children].forEach((d, i) => d.classList.toggle("fill", i < pinValue.length));
+    }
+
+    function pinKey(n) {
+      if (!pinUser || pinValue.length >= 4) return;
+      pinValue += String(n);
+      renderPinDots();
+      if (pinValue.length === 4) setTimeout(checkPin, 120);
+    }
+
+    function pinBack() {
+      pinValue = pinValue.slice(0, -1);
+      $("pin-error").textContent = "";
+      renderPinDots();
+    }
+
+    function checkPin() {
+      if (!pinUser) return;
+      if (pinValue === pinUser.code) {
+        const user = pinUser;
+        closePin();
+        startSession(user);
+      } else {
+        renderPinDots("bad shake");
+        $("pin-error").textContent = "Wrong PIN — try again";
+        if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+        setTimeout(() => { pinValue = ""; renderPinDots(); }, 450);
+      }
+    }
+
+    function startSession(user) {
+      currentUser = user;
+      store.setItem("gcs_user", user.name);
+      $("login-screen").style.display = "none";
+      $("main-app").style.display = "block";
+      $("header-user").textContent = user.name + " · " + (user.building || user.role);
+
+      pmiBuilding = user.building || "GCS-A";
+      $("f-building").value = user.building || "GCS-A";
+
+      renderAll();
+      showScreen("dashboard");
+      refreshData();
+    }
+
+    function logout() {
+      currentUser = null;
+      store.removeItem("gcs_user");
+      $("main-app").style.display = "none";
+      $("login-screen").style.display = "block";
+      window.scrollTo({ top: 0 });
+    }
+
+    // ================== INIT ==================
+    function init() {
+      hydrateFromCache();
+      renderLogin();
+      renderAttGrid();
+      icons();
+
+      // File pickers
+      $("file-img").addEventListener("change", e => { handlePickedFiles(e.target.files, true); e.target.value = ""; });
+      $("file-any").addEventListener("change", e => { handlePickedFiles(e.target.files, false); e.target.value = ""; });
+
+      // Sheet wiring
+      $("confirm-cancel").onclick = () => closeConfirm(false);
+      $("confirm-ok").onclick = () => closeConfirm(true);
+      $("confirm-overlay").addEventListener("click", e => { if (e.target.id === "confirm-overlay") closeConfirm(false); });
+      $("pin-overlay").addEventListener("click", e => { if (e.target.id === "pin-overlay") closePin(); });
+      $("report-overlay").addEventListener("click", e => { if (e.target.id === "report-overlay") $("report-overlay").classList.remove("open"); });
+      $("detail-overlay").addEventListener("click", e => { if (e.target.id === "detail-overlay") $("detail-overlay").classList.remove("open"); });
+      $("viewer-share").onclick = () => { if (viewerAtt) shareOrDownload(viewerAtt); };
+
+      // Hardware keyboard support for the PIN pad
+      document.addEventListener("keydown", e => {
+        if ($("viewer").classList.contains("open") && e.key === "Escape") return closeViewer();
+        if (!$("pin-overlay").classList.contains("open")) return;
+        if (/^[0-9]$/.test(e.key)) pinKey(e.key);
+        else if (e.key === "Backspace") pinBack();
+        else if (e.key === "Escape") closePin();
+      });
+
+      // Stay in sync when the app comes back to the foreground or back online
+      window.addEventListener("online", refreshData);
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshData(); });
+
+      // Restore session
+      const saved = store.getItem("gcs_user");
+      const user = USERS.find(u => u.name === saved);
+      if (user) startSession(user);
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>

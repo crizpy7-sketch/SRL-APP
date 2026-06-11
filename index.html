@@ -205,6 +205,21 @@
     .chip-green  { background: var(--green-soft); color: var(--green); }
     .chip-amber  { background: var(--amber-soft); color: var(--amber-ink); }
 
+    .hdr-add {
+      margin-left: 8px;
+      display: inline-flex; align-items: center; gap: 4px;
+      border: none; border-radius: 999px;
+      background: var(--amber); color: #fff;
+      font-weight: 700; font-size: 12px;
+      padding: 6px 12px;
+      flex-shrink: 0;
+    }
+    .hdr-add svg { width: 13px; height: 13px; }
+    .hdr-add:active { background: var(--amber-ink); }
+
+    #unit-actions .btn { margin-bottom: 10px; }
+    #unit-actions .btn:last-child { margin-bottom: 0; }
+
     /* ---- dashboard ---- */
     .dash-date { padding: 2px 4px 14px; }
     .dash-date .eyebrow { color: #8A9099; }
@@ -268,6 +283,7 @@
     .st-amber  { background: var(--amber-soft);  color: var(--amber-ink); }
     .st-blue   { background: var(--blue-soft);   color: var(--blue); }
     .st-violet { background: var(--violet-soft); color: var(--violet); }
+    .st-steel  { background: #ECECE6; color: var(--steel); }
 
     .mini-btn {
       border: none; border-radius: 10px;
@@ -695,15 +711,16 @@
           </div>
           <div class="form">
             <label class="f-label" for="f-srl">SRL ID *</label>
-            <input id="f-srl" class="input mono" placeholder="e.g. SRL-0481" autocapitalize="characters" autocomplete="off">
+            <input id="f-srl" class="input mono" placeholder="e.g. SRL-0481" autocapitalize="characters" autocomplete="off" list="shack-options">
+            <datalist id="shack-options"></datalist>
 
             <div class="grid-2">
               <div>
-                <label class="f-label" for="f-hivis">Hivis # *</label>
+                <label class="f-label" for="f-hivis">Hivis #</label>
                 <input id="f-hivis" class="input mono" placeholder="e.g. H-12" autocapitalize="characters" autocomplete="off">
               </div>
               <div>
-                <label class="f-label" for="f-column">Column *</label>
+                <label class="f-label" for="f-column">Column</label>
                 <input id="f-column" class="input mono" placeholder="e.g. C-4" autocapitalize="characters" autocomplete="off">
               </div>
             </div>
@@ -767,12 +784,11 @@
             <span>Receive from PMI</span>
           </div>
           <div class="form">
-            <label class="f-label" for="pmi-batch">Batch ID</label>
-            <input id="pmi-batch" class="input mono" placeholder="e.g. PMI-0611" autocapitalize="characters" autocomplete="off">
-            <label class="f-label" for="pmi-qty">Quantity</label>
-            <input id="pmi-qty" class="input" type="number" inputmode="numeric" min="1" value="1">
+            <label class="f-label" for="pmi-ids">SRL IDs — one or many</label>
+            <textarea id="pmi-ids" class="input mono" rows="3" placeholder="SRL-0481, SRL-0482, SRL-0483…" autocapitalize="characters" oninput="updatePmiCount()"></textarea>
+            <div class="att-counter" id="pmi-id-count">Separate IDs with commas, spaces, or new lines</div>
             <button onclick="receiveFromPMI()" class="btn btn-blue">
-              <i data-lucide="arrow-down-to-line"></i> Confirm receipt
+              <i data-lucide="arrow-down-to-line"></i> Add to shack
             </button>
           </div>
         </div>
@@ -801,6 +817,7 @@
             <i data-lucide="warehouse" style="color: var(--amber-ink);"></i>
             <span>GCS-A shack</span>
             <span id="shack-a-count" class="count-chip chip-amber">0</span>
+            <button class="hdr-add" onclick="openAddSheet('GCS-A')"><i data-lucide="plus"></i>Add</button>
           </div>
           <div id="shack-a-list"></div>
         </div>
@@ -810,6 +827,7 @@
             <i data-lucide="warehouse" style="color: var(--amber-ink);"></i>
             <span>GCS-B shack</span>
             <span id="shack-b-count" class="count-chip chip-amber">0</span>
+            <button class="hdr-add" onclick="openAddSheet('GCS-B')"><i data-lucide="plus"></i>Add</button>
           </div>
           <div id="shack-b-list"></div>
         </div>
@@ -942,6 +960,32 @@
     </div>
   </div>
 
+  <!-- ============ ADD-TO-SHACK SHEET ============ -->
+  <div class="overlay" id="add-overlay">
+    <div class="sheet">
+      <div class="grab"></div>
+      <div class="cf-title">Add SRLs to <span id="add-bld"></span> shack</div>
+      <div class="cf-body">Type or paste the SRL IDs — separate them with commas, spaces, or new lines.</div>
+      <textarea id="add-ids" class="input mono" rows="4" placeholder="SRL-0481, SRL-0482…" autocapitalize="characters" oninput="updateAddCount()"></textarea>
+      <div class="att-counter" id="add-count"></div>
+      <button class="btn btn-amber" onclick="confirmAddSheet()"><i data-lucide="plus"></i> Add to shack</button>
+    </div>
+  </div>
+
+  <!-- ============ SHACK UNIT SHEET ============ -->
+  <div class="overlay" id="unit-overlay">
+    <div class="sheet">
+      <div class="grab"></div>
+      <div class="dt-head" style="margin-bottom: 14px;">
+        <div class="row-main">
+          <div class="dt-id" id="unit-id"></div>
+          <div class="dt-sub" id="unit-sub"></div>
+        </div>
+      </div>
+      <div id="unit-actions"></div>
+    </div>
+  </div>
+
   <div id="toast-root"></div>
 
   <div class="tab-bar" id="tab-bar">
@@ -974,7 +1018,9 @@
       "installed":    { label: "Installed", chip: "st-green",  ico: "arrow-down-to-line", icoCls: "ico-green"  },
       "removed":      { label: "To shack",  chip: "st-amber",  ico: "undo-2",             icoCls: "ico-amber"  },
       "pmi-received": { label: "From PMI",  chip: "st-blue",   ico: "truck",              icoCls: "ico-blue"   },
-      "pmi-returned": { label: "To PMI",    chip: "st-violet", ico: "truck",              icoCls: "ico-violet" }
+      "pmi-returned": { label: "To PMI",    chip: "st-violet", ico: "truck",              icoCls: "ico-violet" },
+      "added":        { label: "Added",     chip: "st-blue",   ico: "package-plus",       icoCls: "ico-blue"   },
+      "moved":        { label: "Moved",     chip: "st-steel",  ico: "arrow-left-right",   icoCls: "ico-steel"  }
     };
 
     // ================== STATE ==================
@@ -1027,6 +1073,8 @@
       "truck": '<rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
       "undo-2": '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
       "warehouse": '<path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35a2 2 0 0 1 1.26-1.86l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z"/><path d="M6 18h12"/><path d="M6 14h12"/><path d="M6 10h12"/>',
+      "plus": '<path d="M5 12h14"/><path d="M12 5v14"/>',
+      "arrow-left-right": '<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>',
       "x": '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'
     };
 
@@ -1437,11 +1485,12 @@
         }
 
         items.forEach(item => {
-          const d = document.createElement("div");
-          d.className = "row";
+          const d = document.createElement("button");
+          d.className = "row tap";
           d.innerHTML = `
             <div class="row-main"><div class="row-id">${esc(item.srlId)}</div></div>
-            <div class="row-time">${fmtTime(item.ts)}</div>`;
+            <div class="row-side"><div class="row-time">${fmtTime(item.ts)}</div><div class="row-time" style="color: var(--amber-ink); font-weight: 700;">Tap to manage</div></div>`;
+          d.onclick = () => openUnitSheet(item, b);
           listEl.appendChild(d);
         });
       });
@@ -1473,11 +1522,20 @@
       icons();
     }
 
+    function updateDatalist() {
+      const dl = $("shack-options");
+      if (!dl) return;
+      dl.innerHTML = BUILDINGS.map(b =>
+        (shackData[b] || []).map(x => `<option value="${esc(x.srlId)}">${b} shack</option>`).join("")
+      ).join("");
+    }
+
     function renderAll() {
       renderDashboard();
       renderInstalled();
       renderShack();
       renderPMI();
+      updateDatalist();
       runSearch();
     }
 
@@ -1577,6 +1635,56 @@
       }
     }
 
+    // ================== SHACK / INVENTORY HELPERS ==================
+    function parseIds(text) {
+      const seen = new Set();
+      return String(text || "")
+        .split(/[\s,;]+/)
+        .map(s => s.trim().toUpperCase())
+        .filter(s => s && !seen.has(s) && seen.add(s));
+    }
+
+    function findInShack(srlId) {
+      for (const b of BUILDINGS) {
+        if ((shackData[b] || []).some(x => x.srlId === srlId)) return b;
+      }
+      return null;
+    }
+
+    function pullFromShacks(srlId) {
+      let from = null;
+      BUILDINGS.forEach(b => {
+        const before = (shackData[b] || []).length;
+        shackData[b] = (shackData[b] || []).filter(x => x.srlId !== srlId);
+        if (shackData[b].length < before) from = b;
+      });
+      return from;
+    }
+
+    // Adds units to a shack with duplicate protection. Returns how many were added.
+    function addUnitsToShack(ids, building, status) {
+      if (!shackData[building]) shackData[building] = [];
+      const installed = new Set(getInstalled().map(e => e.srlId));
+      let added = 0;
+      const skipped = [];
+
+      ids.forEach(id => {
+        if (installed.has(id)) { skipped.push(id + " (installed)"); return; }
+        if (findInShack(id)) { skipped.push(id + " (already in a shack)"); return; }
+        shackData[building].unshift({ srlId: id, ts: new Date().toISOString() });
+        inventory.unshift(logEntry({ srlId: id, building, level: status === "pmi-received" ? "PMI Trailer" : "Shack", status }));
+        added++;
+      });
+
+      if (skipped.length) showToast("Skipped " + skipped.join(", "), true);
+      return added;
+    }
+
+    function updatePmiCount() {
+      const n = parseIds($("pmi-ids").value).length;
+      $("pmi-id-count").textContent = n ? `${n} SRL${n > 1 ? "s" : ""} ready to add` : "Separate IDs with commas, spaces, or new lines";
+    }
+
     // ================== ACTIONS ==================
     async function installSRL() {
       const srlId = $("f-srl").value.trim().toUpperCase();
@@ -1586,7 +1694,7 @@
       const level = $("f-level").value;
       const note = $("f-note").value.trim();
 
-      if (!srlId || !hivis || !column) return showToast("Fill in SRL ID, Hivis and Column", true);
+      if (!srlId) return showToast("Enter the SRL ID", true);
       if (getInstalled().some(e => e.srlId === srlId)) return showToast(srlId + " is already installed", true);
 
       const btn = $("btn-install");
@@ -1610,7 +1718,9 @@
       const entry = logEntry({ srlId, building, level, hivis, column, comment: note, status: "installed" });
       if (attMeta.length) entry.att = attMeta;
       inventory.unshift(entry);
-      if (shackData[building]) shackData[building] = shackData[building].filter(x => x.srlId !== srlId);
+
+      // Pull it out of whichever shack it was staged in — either building, exact ID match
+      const from = pullFromShacks(srlId);
 
       $("f-srl").value = ""; $("f-hivis").value = ""; $("f-column").value = ""; $("f-note").value = "";
       newAtts = [];
@@ -1621,8 +1731,8 @@
       icons();
 
       renderAll();
-      showScreen("installed");
-      showToast(srlId + " installed" + (attMeta.length ? ` with ${attMeta.length} file${attMeta.length > 1 ? "s" : ""}` : ""));
+      $("f-srl").focus();
+      showToast(srlId + " installed" + (from ? " — pulled from " + from + " shack" : ""));
       await saveToSupabase();
     }
 
@@ -1640,45 +1750,143 @@
     }
 
     async function receiveFromPMI() {
-      const batch = $("pmi-batch").value.trim().toUpperCase();
-      const qty = Math.max(1, parseInt($("pmi-qty").value) || 1);
-      if (!batch) return showToast("Enter a Batch ID", true);
+      const ids = parseIds($("pmi-ids").value);
+      if (!ids.length) return showToast("Enter at least one SRL ID", true);
 
-      const building = pmiBuilding;
-      if (!shackData[building]) shackData[building] = [];
-
-      for (let i = 0; i < qty; i++) {
-        shackData[building].unshift({ srlId: `${batch}-${i + 1}`, ts: new Date().toISOString() });
-      }
-      inventory.unshift(logEntry({ srlId: `${batch} ×${qty}`, building, level: "PMI Trailer", status: "pmi-received" }));
-
-      $("pmi-batch").value = "";
-      $("pmi-qty").value = "1";
+      const added = addUnitsToShack(ids, pmiBuilding, "pmi-received");
+      $("pmi-ids").value = "";
+      updatePmiCount();
 
       renderAll();
-      showToast(qty + " unit" + (qty > 1 ? "s" : "") + " received into " + building);
-      await saveToSupabase();
+      if (added) {
+        showToast(added + " SRL" + (added > 1 ? "s" : "") + " added to " + pmiBuilding + " shack");
+        await saveToSupabase();
+      }
     }
 
     async function returnToPMI() {
       const building = pmiBuilding;
-      const count = (shackData[building] || []).length;
-      if (count === 0) return showToast(building + " shack is empty", true);
+      const items = shackData[building] || [];
+      if (!items.length) return showToast(building + " shack is empty", true);
 
-      const ok = await askConfirm("Return " + count + " unit" + (count > 1 ? "s" : "") + "?", "This clears the entire " + building + " shack and logs the return to PMI.", "Return all");
+      const ok = await askConfirm("Return " + items.length + " unit" + (items.length > 1 ? "s" : "") + "?", "This clears the entire " + building + " shack and logs each SRL as returned to PMI.", "Return all");
       if (!ok) return;
 
-      inventory.unshift(logEntry({ srlId: `${count} units`, building, level: "PMI Trailer", status: "pmi-returned" }));
+      items.forEach(i => inventory.unshift(logEntry({ srlId: i.srlId, building, level: "PMI Trailer", status: "pmi-returned" })));
       shackData[building] = [];
 
       renderAll();
-      showToast(count + " returned to PMI");
+      showToast(items.length + " returned to PMI");
       await saveToSupabase();
     }
 
     function setPmiBuilding(b) {
       pmiBuilding = b;
       renderPMI();
+    }
+
+    // ================== ADD-TO-SHACK SHEET ==================
+    let addBuilding = "GCS-A";
+
+    function openAddSheet(b) {
+      addBuilding = b;
+      $("add-bld").textContent = b;
+      $("add-ids").value = "";
+      updateAddCount();
+      $("add-overlay").classList.add("open");
+    }
+
+    function updateAddCount() {
+      const n = parseIds($("add-ids").value).length;
+      $("add-count").textContent = n ? `${n} SRL${n > 1 ? "s" : ""} ready` : "Good for loading in stock that's already on site";
+    }
+
+    async function confirmAddSheet() {
+      const ids = parseIds($("add-ids").value);
+      if (!ids.length) return showToast("Enter at least one SRL ID", true);
+
+      const added = addUnitsToShack(ids, addBuilding, "added");
+      $("add-overlay").classList.remove("open");
+
+      renderAll();
+      if (added) {
+        showToast(added + " SRL" + (added > 1 ? "s" : "") + " added to " + addBuilding + " shack");
+        await saveToSupabase();
+      }
+    }
+
+    // ================== SHACK UNIT SHEET ==================
+    let unitCtx = null;
+
+    function openUnitSheet(item, building) {
+      unitCtx = { srlId: item.srlId, building };
+      $("unit-id").textContent = item.srlId;
+      $("unit-sub").textContent = building + " shack · since " + fmtTime(item.ts);
+
+      const other = building === "GCS-A" ? "GCS-B" : "GCS-A";
+      const c = $("unit-actions");
+      c.innerHTML = `
+        <button class="btn btn-amber" onclick="unitInstall()"><i data-lucide="package-plus"></i> Install this SRL</button>
+        <button class="btn btn-ghost" onclick="unitMove()"><i data-lucide="arrow-left-right"></i> Move to ${other} shack</button>
+        <button class="btn btn-ghost" onclick="unitReturn()"><i data-lucide="arrow-up-from-line"></i> Return to PMI</button>
+        <button class="btn btn-danger" onclick="unitDelete()"><i data-lucide="x"></i> Delete entry</button>`;
+      icons();
+      $("unit-overlay").classList.add("open");
+    }
+
+    function closeUnitSheet() { $("unit-overlay").classList.remove("open"); }
+
+    function unitInstall() {
+      if (!unitCtx) return;
+      closeUnitSheet();
+      showScreen("install");
+      $("f-srl").value = unitCtx.srlId;
+      $("f-building").value = unitCtx.building;
+      $("f-hivis").focus();
+    }
+
+    async function unitMove() {
+      if (!unitCtx) return;
+      const { srlId, building } = unitCtx;
+      const other = building === "GCS-A" ? "GCS-B" : "GCS-A";
+      closeUnitSheet();
+
+      pullFromShacks(srlId);
+      if (!shackData[other]) shackData[other] = [];
+      shackData[other].unshift({ srlId, ts: new Date().toISOString() });
+      inventory.unshift(logEntry({ srlId, building: other, level: "Shack", status: "moved" }));
+
+      renderAll();
+      showToast(srlId + " moved to " + other + " shack");
+      await saveToSupabase();
+    }
+
+    async function unitReturn() {
+      if (!unitCtx) return;
+      const { srlId, building } = unitCtx;
+      closeUnitSheet();
+      const ok = await askConfirm("Return " + srlId + " to PMI?", "It will be removed from the " + building + " shack and logged as returned.", "Return");
+      if (!ok) return;
+
+      pullFromShacks(srlId);
+      inventory.unshift(logEntry({ srlId, building, level: "PMI Trailer", status: "pmi-returned" }));
+
+      renderAll();
+      showToast(srlId + " returned to PMI");
+      await saveToSupabase();
+    }
+
+    async function unitDelete() {
+      if (!unitCtx) return;
+      const { srlId, building } = unitCtx;
+      closeUnitSheet();
+      const ok = await askConfirm("Delete " + srlId + "?", "Use this to fix a wrong entry. It just removes the unit from the " + building + " shack — nothing is logged.", "Delete");
+      if (!ok) return;
+
+      pullFromShacks(srlId);
+      renderAll();
+      showToast(srlId + " deleted");
+      await saveToSupabase();
     }
 
     // ================== REPORTS ==================
@@ -1886,6 +2094,8 @@
       $("pin-overlay").addEventListener("click", e => { if (e.target.id === "pin-overlay") closePin(); });
       $("report-overlay").addEventListener("click", e => { if (e.target.id === "report-overlay") $("report-overlay").classList.remove("open"); });
       $("detail-overlay").addEventListener("click", e => { if (e.target.id === "detail-overlay") $("detail-overlay").classList.remove("open"); });
+      $("add-overlay").addEventListener("click", e => { if (e.target.id === "add-overlay") $("add-overlay").classList.remove("open"); });
+      $("unit-overlay").addEventListener("click", e => { if (e.target.id === "unit-overlay") closeUnitSheet(); });
       $("viewer-share").onclick = () => { if (viewerAtt) shareOrDownload(viewerAtt); };
 
       // Hardware keyboard support for the PIN pad

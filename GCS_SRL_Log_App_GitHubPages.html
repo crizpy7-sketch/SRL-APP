@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GCS Buildings - SRL Log</title>
+  <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  
+  <!-- Load scripts with error handling -->
+  <script>
+    window.onerror = function(msg, src, line, col, error) {
+      const d = document.createElement("div");
+      d.style.cssText = "position:fixed;top:0;left:0;right:0;background:#B23030;color:#fff;padding:16px;font-family:sans-serif;font-size:13px;z-index:99999;line-height:1.4";
+      d.innerHTML = `
+        <strong>App failed to load</strong><br>
+        ${msg}<br>
+        <small style="opacity:0.8">Line ${line} • Please refresh or re-upload index.html</small>
+      `;
+      document.body.appendChild(d);
+    };
+  </script>
+  
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide-react@0.383.0/dist/umd/lucide-react.min.js"></script>
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      background: #16181D; 
+      font-family: 'IBM Plex Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #7E8794;
+      font-size: 15px;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid #2B3038;
+      border-top-color: #E8910C;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div class="loading-screen">
+      <div class="spinner"></div>
+      <div>Loading GCS SRL Log...</div>
+      <div style="font-size:12px; opacity:0.6; margin-top:8px">If this stays stuck, try refreshing</div>
+    </div>
+  </div>
+
+  <script type="text/babel">
+    // ════════════════════════════════════════════════════════
+    // GCS Buildings SRL Log - GitHub Pages Optimized Version
+    // ════════════════════════════════════════════════════════
+
+    const SUPA_URL = "https://bjnkgxkcbbnbtazelsjs.supabase.co";
+    const SUPA_KEY = "sb_publishable_F49fzNl_CTWUdJy5ZdMDMw_MFrIOXw-";
+
+    const CONFIGURED = SUPA_URL && SUPA_KEY && !SUPA_URL.includes("PASTE");
+    const H = { 
+      "apikey": SUPA_KEY, 
+      "Authorization": "Bearer " + SUPA_KEY, 
+      "Content-Type": "application/json" 
+    };
+
+    async function dbGet(id) {
+      if (!CONFIGURED) return null;
+      try {
+        const r = await fetch(SUPA_URL + "/rest/v1/app_state?id=eq." + id + "&select=data", { headers: H });
+        if (!r.ok) return null;
+        const j = await r.json();
+        return j[0] ? j[0].data : null;
+      } catch (e) { return null; }
+    }
+
+    async function dbSet(id, data) {
+      if (!CONFIGURED) return;
+      try {
+        await fetch(SUPA_URL + "/rest/v1/app_state", {
+          method: "POST",
+          headers: { ...H, "Prefer": "resolution=merge-duplicates" },
+          body: JSON.stringify({ id, data })
+        });
+      } catch (e) {}
+    }
+
+    const { useState, useEffect, useRef } = React;
+    const { 
+      LogOut, ChevronRight, Lock, HardHat, CheckCircle2, X, Camera, Paperclip, 
+      FileText, MapPin, Printer, LayoutDashboard, PackagePlus, ListChecks, 
+      Search, Truck, Warehouse, ArrowDownToLine, ArrowUpFromLine, Activity, 
+      Boxes, User, RefreshCw 
+    } = LucideReact || {};
+
+    const C = { 
+      ink: "#16181D", inkSoft: "#1F232B", line: "#2B3038", paper: "#F4F3EF", 
+      card: "#FFF", border: "#E4E2DB", text: "#21242B", muted: "#6B7280", 
+      accent: "#E8910C", accentSoft: "#FBEFD7" 
+    };
+
+    const BUILDINGS = ["GCS-A", "GCS-B"];
+    const LEVELS = ["Ground Level", "Mezzanine Level", "Rooftop"];
+    const USERS = [
+      { name: "Cristian Lopez",  role: "Inventory Manager", building: null,    code: "1111" },
+      { name: "Genaro Collazo",  role: "QC",                building: "GCS-A", code: "2222" },
+      { name: "Isaias Alfaro",   role: "General Foreman",   building: "GCS-A", code: "3333" },
+      { name: "Antonio Chavez",  role: "QC",                building: "GCS-B", code: "4444" },
+      { name: "Manuel Morales",  role: "General Foreman",   building: "GCS-B", code: "5555" },
+    ];
+
+    const inpStyle = { background: "#FBFAF7", border: "1px solid " + C.border, color: C.text, borderRadius: 8, padding: "10px 14px", fontSize: 15, width: "100%", outline: "none", boxSizing: "border-box" };
+    const btnStyle = (bg, fg) => ({ background: bg, color: fg, border: "none", borderRadius: 8, padding: "12px 16px", fontWeight: 700, fontSize: 15, cursor: "pointer", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 });
+    const lblStyle = { color: C.muted, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 };
+
+    function Badge({ status }) {
+      const map = {
+        installed: { l: "Installed", bg: "#E7F4EC", fg: "#1B7A43", dot: "#22A35A" },
+        removed: { l: "Removed", bg: "#FBEAEA", fg: "#B23030", dot: "#D14343" },
+        "pmi-received": { l: "PMI In", bg: "#E8F0FB", fg: "#1F5FB0", dot: "#2C76D1" },
+        "pmi-returned": { l: "PMI Out", bg: "#F1ECF9", fg: "#6A45A8", dot: "#8A5BD0" }
+      };
+      const s = map[status] || { l: status, bg: "#EEE", fg: "#444", dot: "#999" };
+      return React.createElement("span", {
+        style: { background: s.bg, color: s.fg, borderRadius: 99, padding: "3px 10px", fontSize: 11, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 5 }
+      }, [
+        React.createElement("span", { style: { width: 6, height: 6, borderRadius: 99, background: s.dot } }),
+        s.l
+      ]);
+    }
+
+    function SectionHead({ icon: Icon, color, bg, title, right }) {
+      return React.createElement("div", {
+        style: { padding: "12px 16px", borderBottom: "1px solid " + C.border, display: "flex", alignItems: "center", justifyContent: "space-between" }
+      }, [
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, [
+          React.createElement("div", { style: { width: 30, height: 30, borderRadius: 8, background: bg, display: "grid", placeItems: "center" } }, 
+            Icon ? React.createElement(Icon, { size: 16, color: color }) : null
+          ),
+          React.createElement("span", { style: { fontWeight: 600 } }, title)
+        ]),
+        right
+      ]);
+    }
+
+    function PinPad({ label, code, onOk, onBack }) {
+      const [pin, setPin] = React.useState("");
+      const [err, setErr] = React.useState("");
+
+      const press = (k) => {
+        if (pin.length >= 4) return;
+        const n = pin + k;
+        setPin(n);
+        if (n.length === 4) {
+          setTimeout(() => {
+            if (n === code) onOk();
+            else { setErr("Wrong code"); setPin(""); }
+          }, 120);
+        }
+      };
+
+      return React.createElement("div", {
+        style: { background: C.ink, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }
+      }, React.createElement("div", { style: { width: "100%", maxWidth: 320 } }, [
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginBottom: 32, justifyContent: "center" } }, [
+          React.createElement("div", { style: { background: C.accent, borderRadius: 10, width: 44, height: 44, display: "grid", placeItems: "center" } }, 
+            React.createElement(Lock, { size: 22, color: C.ink })
+          ),
+          React.createElement("div", {}, [
+            React.createElement("div", { style: { color: "#fff", fontSize: 22, fontWeight: 700 } }, "Enter Code"),
+            React.createElement("div", { style: { color: "#7E8794", fontSize: 11 } }, label)
+          ])
+        ]),
+        React.createElement("div", { style: { background: C.inkSoft, borderRadius: 12, padding: 20, border: "1px solid " + C.line } }, [
+          React.createElement("div", { style: { display: "flex", justifyContent: "center", gap: 12, marginBottom: 20 } },
+            [0,1,2,3].map(i => React.createElement("div", { key: i, style: { width: 14, height: 14, borderRadius: 99, background: i < pin.length ? C.accent : C.line } }))
+          ),
+          err && React.createElement("div", { style: { color: "#D14343", fontSize: 12, textAlign: "center", marginBottom: 10 } }, err),
+          React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 } },
+            [1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((k, i) =>
+              React.createElement("button", {
+                key: i,
+                onClick: () => k === "⌫" ? setPin(p => p.slice(0,-1)) : k !== "" && press(String(k)),
+                style: { background: k === "" ? "transparent" : C.inkSoft, color: "#E6E8EC", border: k === "" ? "none" : "1px solid " + C.line, borderRadius: 10, padding: "14px 0", fontSize: 20, fontWeight: 700 }
+              }, k)
+            )
+          )
+        ]),
+        React.createElement("button", { onClick: onBack, style: { color: "#7E8794", background: "none", border: "none", width: "100%", marginTop: 16, fontSize: 14 } }, "← Back")
+      ]));
+    }
+
+    function FileUploader({ files, setFiles }) {
+      const imgRef = useRef();
+      const fileRef = useRef();
+      const [preview, setPreview] = React.useState(null);
+      const MAX = 5;
+
+      const addImages = async (fs) => {
+        for (const f of Array.from(fs).slice(0, MAX - files.length)) {
+          const data = await compressImage(f);
+          setFiles(p => p.length < MAX ? [...p, { name: f.name, type: "image/jpeg", data }] : p);
+        }
+      };
+
+      const addFiles = (fs) => {
+        Array.from(fs).slice(0, MAX - files.length).forEach(f => {
+          if (f.size > 1500000) return;
+          const r = new FileReader();
+          r.onload = e => setFiles(p => p.length < MAX ? [...p, { name: f.name, type: f.type, data: e.target.result }] : p);
+          r.readAsDataURL(f);
+        });
+      };
+
+      return React.createElement("div", {}, [
+        React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 10, alignItems: "center" } }, [
+          React.createElement("button", { type: "button", onClick: () => imgRef.current.click(), disabled: files.length >= MAX, style: { background: "#FBEFD7", color: "#9A5E04", border: "1px solid #F5D08A", borderRadius: 8, padding: "7px 12px", fontSize: 13, fontWeight: 600 } }, "📷 Photo"),
+          React.createElement("button", { type: "button", onClick: () => fileRef.current.click(), disabled: files.length >= MAX, style: { background: "#E8F0FB", color: "#1F5FB0", border: "1px solid #B6CFF5", borderRadius: 8, padding: "7px 12px", fontSize: 13, fontWeight: 600 } }, "📎 File"),
+          React.createElement("span", { style: { color: C.muted, fontSize: 12, marginLeft: "auto" } }, files.length + "/" + MAX)
+        ]),
+        React.createElement("input", { ref: imgRef, type: "file", accept: "image/*", multiple: true, style: { display: "none" }, onChange: e => { addImages(e.target.files); e.target.value = ""; } }),
+        React.createElement("input", { ref: fileRef, type: "file", multiple: true, style: { display: "none" }, onChange: e => { addFiles(e.target.files); e.target.value = ""; } }),
+        files.length > 0 && React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 6 } },
+          files.map((f, i) =>
+            React.createElement("div", { key: i, style: { position: "relative", borderRadius: 8, overflow: "hidden", border: "1px solid " + C.border, aspectRatio: "1", background: C.paper } }, [
+              f.type && f.type.startsWith("image/") 
+                ? React.createElement("img", { src: f.data, style: { width: "100%", height: "100%", objectFit: "cover" }, onClick: () => setPreview(f.data) })
+                : React.createElement("div", { style: { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" } }, React.createElement(FileText, { size: 20, color: C.muted })),
+              React.createElement("button", { onClick: () => setFiles(p => p.filter((_,j) => j !== i)), style: { position: "absolute", top: 2, right: 2, background: "rgba(0,0,0,0.55)", border: "none", borderRadius: 99, width: 22, height: 22 } }, "✕")
+            ])
+          )
+        ),
+        preview && React.createElement("div", { onClick: () => setPreview(null), style: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 } },
+          React.createElement("img", { src: preview, style: { maxWidth: "100%", maxHeight: "100%", borderRadius: 12 } })
+        )
+      ]);
+    }
+
+    function App() {
+      const [screen, setScreen] = React.useState("login");
+      const [user, setUser] = React.useState(null);
+      const [pending, setPending] = React.useState(null);
+      const [inv, setInv] = React.useState([]);
+      const [shack, setShack] = React.useState({ "GCS-A": [], "GCS-B": [] });
+      const [toast, setToast] = React.useState(null);
+      const [syncing, setSyncing] = React.useState(false);
+
+      const [fSrl, setFSrl] = React.useState("");
+      const [fBldg, setFBldg] = React.useState("GCS-A");
+      const [fLevel, setFLevel] = React.useState("Ground Level");
+      const [fHivis, setFHivis] = React.useState("");
+      const [fCol, setFCol] = React.useState("");
+      const [fNote, setFNote] = React.useState("");
+      const [fFiles, setFFiles] = React.useState([]);
+
+      const [pmiId, setPmiId] = React.useState("");
+      const [pmiQty, setPmiQty] = React.useState("1");
+      const [q, setQ] = React.useState("");
+      const [results, setResults] = React.useState([]);
+
+      React.useEffect(() => {
+        if (!toast) return;
+        const t = setTimeout(() => setToast(null), 2600);
+        return () => clearTimeout(t);
+      }, [toast]);
+
+      const notify = (msg, k) => setToast({ msg, k: k || "ok" });
+
+      const loadData = async () => {
+        setSyncing(true);
+        try {
+          const d = await dbGet("main");
+          if (d) {
+            setInv(d.inv || []);
+            setShack(d.shack || { "GCS-A": [], "GCS-B": [] });
+          }
+        } catch (e) {}
+        setSyncing(false);
+      };
+
+      const persist = async (nextInv, nextShack) => {
+        try { await dbSet("main", { inv: nextInv, shack: nextShack }); } 
+        catch (e) { notify("Sync failed", "warn"); }
+      };
+
+      React.useEffect(() => { loadData(); }, []);
+
+      const logEntry = (extra) => ({
+        id: Date.now(),
+        ts: new Date().toLocaleString(),
+        by: user ? user.name : "",
+        ...extra
+      });
+
+      const getInstalled = () => {
+        const installedSet = new Set();
+        const result = [];
+        const chronological = [...inv].reverse();
+        chronological.forEach(e => {
+          if (e.status === "installed" && !installedSet.has(e.srlId)) {
+            installedSet.add(e.srlId);
+            result.push(e);
+          } else if (e.status === "removed") {
+            installedSet.delete(e.srlId);
+          }
+        });
+        return result;
+      };
+
+      const installSRL = async () => {
+        if (!fSrl || !fHivis || !fCol) return notify("Fill SRL ID, Hivis and Column", "warn");
+        const entry = logEntry({ srlId: fSrl, building: fBldg, level: fLevel, hivis: fHivis, column: fCol, comment: fNote, fileCount: fFiles.length, status: "installed" });
+        const nextInv = [entry, ...inv];
+        const nextShack = { ...shack, [fBldg]: shack[fBldg].filter(x => x.srlId !== fSrl) };
+        setInv(nextInv);
+        setShack(nextShack);
+        if (fFiles.length) await dbSet("f-" + entry.id, fFiles);
+        await persist(nextInv, nextShack);
+        setFSrl(""); setFHivis(""); setFCol(""); setFNote(""); setFFiles([]);
+        notify("SRL " + entry.srlId + " installed");
+      };
+
+      const removeSRL = (e) => {
+        const entry = logEntry({ srlId: e.srlId, building: e.building, level: "Print Shack", hivis: "—", column: "—", comment: "Returned to shack", fileCount: 0, status: "removed" });
+        const nextInv = [entry, ...inv];
+        const nextShack = { ...shack, [e.building]: [...(shack[e.building] || []), { srlId: e.srlId, ts: new Date().toLocaleString() }] };
+        setInv(nextInv); setShack(nextShack); persist(nextInv, nextShack);
+        notify("SRL " + e.srlId + " removed");
+      };
+
+      const receivePMI = () => {
+        if (!pmiId || !pmiQty) return notify("Enter Batch ID and quantity", "warn");
+        const b = (user && user.building) || fBldg;
+        const qty = parseInt(pmiQty) || 1;
+        const newUnits = Array.from({ length: qty }, (_, i) => ({ srlId: pmiId + "-" + (i + 1), ts: new Date().toLocaleString() }));
+        const entry = logEntry({ srlId: pmiId + " ×" + qty, building: b, level: "PMI Trailer", hivis: "IN", column: "—", comment: "Received from PMI", fileCount: 0, status: "pmi-received" });
+        const nextInv = [entry, ...inv];
+        const nextShack = { ...shack, [b]: [...(shack[b] || []), ...newUnits] };
+        setInv(nextInv); setShack(nextShack); persist(nextInv, nextShack);
+        setPmiId(""); setPmiQty("1");
+        notify(qty + " unit(s) received");
+      };
+
+      const returnPMI = (b) => {
+        const n = (shack[b] || []).length;
+        if (!n) return notify("Shack is empty", "warn");
+        const entry = logEntry({ srlId: n + " units", building: b, level: "PMI Trailer", hivis: "OUT", column: "—", comment: "Returned to PMI", fileCount: 0, status: "pmi-returned" });
+        const nextInv = [entry, ...inv];
+        const nextShack = { ...shack, [b]: [] };
+        setInv(nextInv); setShack(nextShack); persist(nextInv, nextShack);
+        notify(n + " units returned to PMI");
+      };
+
+      const isQC = user && (user.role === "QC" || user.role === "Inventory Manager");
+
+      const tabs = isQC 
+        ? [{ id: "dashboard", l: "Home", ic: LayoutDashboard }, { id: "install", l: "Install", ic: PackagePlus }, { id: "installed", l: "Installed", ic: ListChecks }, { id: "reports", l: "Reports", ic: Printer }, { id: "search", l: "History", ic: Search }]
+        : [{ id: "dashboard", l: "Home", ic: LayoutDashboard }, { id: "pmi", l: "PMI", ic: Truck }, { id: "shack", l: "Shack", ic: Warehouse }, { id: "reports", l: "Reports", ic: Printer }, { id: "search", l: "History", ic: Search }];
+
+      if (screen === "login") {
+        if (pending) {
+          return React.createElement(PinPad, {
+            label: pending.role + (pending.building ? " · " + pending.building : " · All Buildings"),
+            code: pending.code,
+            onOk: () => { setUser(pending); if (pending.building) setFBldg(pending.building); setPending(null); setScreen("dashboard"); },
+            onBack: () => setPending(null)
+          });
+        }
+
+        return React.createElement("div", { style: { background: C.ink, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 } },
+          React.createElement("div", { style: { width: "100%", maxWidth: 360 } }, [
+            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginBottom: 32 } }, [
+              React.createElement("div", { style: { background: C.accent, borderRadius: 12, width: 52, height: 52, display: "grid", placeItems: "center" } }, React.createElement(HardHat, { size: 28, color: C.ink })),
+              React.createElement("div", {}, [
+                React.createElement("div", { style: { color: "#fff", fontSize: 36, fontWeight: 700 } }, "GCS BUILDINGS"),
+                React.createElement("div", { style: { color: "#7E8794", fontSize: 11, marginTop: 4 } }, "SRL LOG · FALL PROTECTION")
+              ])
+            ]),
+            React.createElement("div", { style: { background: C.inkSoft, borderRadius: 12, padding: 16, border: "1px solid " + C.line } }, [
+              React.createElement("div", { style: { color: "#9AA3AF", fontSize: 11, fontWeight: 700, textTransform: "uppercase", marginBottom: 12 } }, "SIGN IN"),
+              ...USERS.map((u, i) =>
+                React.createElement("button", {
+                  key: i,
+                  onClick: () => setPending(u),
+                  style: { background: "#262B33", border: "1px solid " + C.line, borderRadius: 10, padding: "14px 16px", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: i < USERS.length - 1 ? 8 : 0 }
+                }, [
+                  React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, [
+                    React.createElement("div", { style: { width: 34, height: 34, borderRadius: 99, background: C.accent, display: "grid", placeItems: "center" } }, React.createElement(User, { size: 16, color: C.ink })),
+                    React.createElement("div", { style: { textAlign: "left" } }, [
+                      React.createElement("div", { style: { color: "#E6E8EC", fontWeight: 600, fontSize: 14 } }, u.name),
+                      React.createElement("div", { style: { color: "#7E8794", fontSize: 11 } }, u.role + (u.building ? " · " + u.building : " · ALL BUILDINGS"))
+                    ])
+                  ]),
+                  React.createElement(ChevronRight, { size: 18, color: "#7E8794" })
+                ])
+              )
+            ])
+          ])
+        );
+      }
+
+      return React.createElement("div", { style: { background: C.paper, minHeight: "100vh" } }, [
+        // Top bar
+        React.createElement("div", { style: { background: C.card, borderBottom: "1px solid " + C.border, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" } }, [
+          React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, [
+            React.createElement("div", { style: { background: C.accent, borderRadius: 8, width: 34, height: 34, display: "grid", placeItems: "center" } }, React.createElement(HardHat, { size: 18, color: C.ink })),
+            React.createElement("div", {}, [
+              React.createElement("div", { style: { color: C.text, fontSize: 20, fontWeight: 700 } }, "GCS BUILDINGS"),
+              React.createElement("div", { style: { color: C.muted, fontSize: 10 } }, user ? user.name + (user.building ? " · " + user.building : "") : "")
+            ])
+          ]),
+          React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, [
+            React.createElement("button", { onClick: loadData, style: { background: C.paper, border: "1px solid " + C.border, borderRadius: 8, width: 36, height: 36, display: "grid", placeItems: "center" } }, React.createElement(RefreshCw, { size: 15, color: syncing ? C.accent : C.muted, style: syncing ? { animation: "spin 1s linear infinite" } : {} })),
+            user && user.building && React.createElement("div", { style: { background: C.accentSoft, borderRadius: 8, padding: "4px 10px", display: "flex", alignItems: "center", gap: 4 } }, [React.createElement(MapPin, { size: 13, color: C.accent }), React.createElement("span", { style: { color: "#9A5E04", fontSize: 12, fontWeight: 600 } }, user.building)]),
+            React.createElement("button", { onClick: () => { setUser(null); setPending(null); setScreen("login"); }, style: { background: C.paper, border: "1px solid " + C.border, borderRadius: 8, width: 36, height: 36, display: "grid", placeItems: "center" } }, React.createElement(LogOut, { size: 16, color: C.muted }))
+          ])
+        ]),
+
+        React.createElement("div", { style: { padding: 16, paddingBottom: 90 } }, [
+          screen === "dashboard" && React.createElement("div", {}, [
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 } }, [
+              { l: "Installed Now", v: getInstalled().length, ic: ListChecks, bg: "#E7F4EC", fg: "#1B7A43" },
+              { l: "GCS-A Shack", v: (shack["GCS-A"] || []).length, ic: Warehouse, bg: "#E8F0FB", fg: "#1F5FB0" },
+              { l: "GCS-B Shack", v: (shack["GCS-B"] || []).length, ic: Warehouse, bg: "#FBEFD7", fg: "#9A5E04" },
+              { l: "Total Log Entries", v: inv.length, ic: Activity, bg: "#F1ECF9", fg: "#6A45A8" }
+            ].map((m, i) =>
+              React.createElement("div", { key: i, onClick: () => {
+                if (m.l.includes("Installed")) setScreen("installed");
+                else if (m.l.includes("Shack")) setScreen("shack");
+                else if (m.l.includes("Log")) setScreen("search");
+              }, style: { background: C.card, border: "1px solid " + C.border, borderRadius: 12, padding: 14, cursor: "pointer" } }, [
+                React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" } }, [
+                  React.createElement("div", {}, [
+                    React.createElement("div", { style: { color: C.muted, fontSize: 11, fontWeight: 600, textTransform: "uppercase" } }, m.l),
+                    React.createElement("div", { style: { color: C.text, fontSize: 36, fontWeight: 700, marginTop: 4 } }, m.v)
+                  ]),
+                  React.createElement("div", { style: { width: 34, height: 34, borderRadius: 8, background: m.bg, display: "grid", placeItems: "center" } }, React.createElement(m.ic, { size: 17, color: m.fg }))
+                ])
+              ])
+            )),
+            React.createElement("div", { style: { background: C.card, border: "1px solid " + C.border, borderRadius: 12, overflow: "hidden" } }, [
+              React.createElement(SectionHead, { icon: Activity, color: "#6A45A8", bg: "#F1ECF9", title: "Recent Activity", right: React.createElement("button", { onClick: () => setScreen("search"), style: { color: C.accent, background: "none", border: "none", fontWeight: 600 } }, "View all →") }),
+              inv.length === 0 
+                ? React.createElement("div", { style: { padding: 32, textAlign: "center", color: C.muted } }, "No activity yet")
+                : inv.slice(0, 6).map((e, i) => React.createElement("div", { key: i, style: { padding: "10px 16px", borderBottom: i < 5 ? "1px solid " + C.border : "none", display: "flex", justifyContent: "space-between", alignItems: "center" } }, [
+                    React.createElement("div", {}, [
+                      React.createElement("div", { style: { fontWeight: 600, fontSize: 13 } }, e.srlId),
+                      React.createElement("div", { style: { color: C.muted, fontSize: 11 } }, e.building + " · " + e.level + " · " + e.by)
+                    ]),
+                    React.createElement(Badge, { status: e.status })
+                  ]))
+            ])
+          ]),
+
+          screen === "install" && React.createElement("div", { style: { maxWidth: 520, margin: "0 auto" } },
+            React.createElement("div", { style: { background: C.card, border: "1px solid " + C.border, borderRadius: 12, overflow: "hidden" } }, [
+              React.createElement(SectionHead, { icon: PackagePlus, color: "#1B7A43", bg: "#E7F4EC", title: "Install SRL on Scaffold" }),
+              React.createElement("div", { style: { padding: 16 } }, [
+                ["SRL ID *", fSrl, e => setFSrl(e.target.value.toUpperCase()), "e.g. SRL-784291"],
+                ["Hivis (Scaffold #) *", fHivis, e => setFHivis(e.target.value.toUpperCase()), "e.g. HIV-654321"],
+                ["Column *", fCol, e => setFCol(e.target.value.toUpperCase()), "e.g. A-12"]
+              ].map(([label, val, fn, ph], i) =>
+                React.createElement("div", { key: i, style: { marginBottom: 14 } }, [
+                  React.createElement("div", { style: lblStyle }, label),
+                  React.createElement("input", { value: val, onChange: fn, placeholder: ph, style: { ...inpStyle, fontFamily: "'IBM Plex Mono',monospace" } })
+                ])
+              )),
+              React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 } }, [
+                React.createElement("div", {}, [React.createElement("div", { style: lblStyle }, "Building"), React.createElement("select", { value: fBldg, onChange: e => setFBldg(e.target.value), style: inpStyle }, BUILDINGS.map(b => React.createElement("option", { key: b }, b)))]),
+                React.createElement("div", {}, [React.createElement("div", { style: lblStyle }, "Level"), React.createElement("select", { value: fLevel, onChange: e => setFLevel(e.target.value), style: inpStyle }, LEVELS.map(l => React.createElement("option", { key: l }, l)))])
+              ]),
+              React.createElement("div", { style: { marginBottom: 14 } }, [React.createElement("div", { style: lblStyle }, "Comments (optional)"), React.createElement("textarea", { value: fNote, onChange: e => setFNote(e.target.value), rows: 2, style: { ...inpStyle, resize: "none" } })]),
+              React.createElement("div", { style: { marginBottom: 16 } }, [React.createElement("div", { style: lblStyle }, "Photos & Files (max 5)"), React.createElement(FileUploader, { files: fFiles, setFiles: setFFiles })]),
+              React.createElement("button", { onClick: installSRL, style: btnStyle(C.accent, C.ink) }, "Confirm Installation")
+            ])
+          ),
+
+          screen === "installed" && React.createElement("div", { style: { background: C.card, border: "1px solid " + C.border, borderRadius: 12, overflow: "hidden" } }, [
+            React.createElement(SectionHead, { icon: ListChecks, color: "#1B7A43", bg: "#E7F4EC", title: "Currently Installed SRLs", right: React.createElement("span", { style: { color: C.accent, fontSize: 24, fontWeight: 700 } }, getInstalled().length) }),
+            getInstalled().length === 0 
+              ? React.createElement("div", { style: { padding: 40, textAlign: "center", color: C.muted } }, "No SRLs currently installed")
+              : getInstalled().map((e, i) => React.createElement("div", { key: i, style: { padding: "14px 16px", borderBottom: i < getInstalled().length - 1 ? "1px solid " + C.border : "none" } }, [
+                  React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 } }, [
+                    React.createElement("div", { style: { flex: 1 } }, [
+                      React.createElement("div", { style: { fontWeight: 700, fontSize: 16 } }, e.srlId),
+                      React.createElement("div", { style: { color: C.muted, fontSize: 12, marginTop: 3 } }, e.building + " · " + e.level + " • H" + e.hivis + " / " + e.column),
+                      e.comment && React.createElement("div", { style: { color: C.muted, fontSize: 13, marginTop: 4 } }, e.comment)
+                    ]),
+                    React.createElement("button", { onClick: () => removeSRL(e), style: { background: "#FBEAEA", color: "#B23030", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 700 } }, "Remove")
+                  ])
+                ]))
+          ]),
+
+          screen === "reports" && React.createElement("div", { style: { background: C.card, border: "1px solid " + C.border, borderRadius: 12, padding: 20 } }, 
+            React.createElement("div", { style: { color: C.muted, textAlign: "center", padding: 40 } }, "Reports coming soon in next update")
+          ),
+
+          screen === "pmi" && React.createElement("div", {}, [
+            React.createElement("div", { style: { background: C.card, border: "1px solid " + C.border, borderRadius: 12, marginBottom: 14, overflow: "hidden" } }, [
+              React.createElement(SectionHead, { icon: Truck, color: "#1F5FB0", bg: "#E8F0FB", title: "Receive from PMI Trailer" }),
+              React.createElement("div", { style: { padding: 16 } }, [
+                React.createElement("div", { style: { marginBottom: 12 } }, [React.createElement("div", { style: lblStyle }, "SRL Batch ID *"), React.createElement("input", { value: pmiId, onChange: e => setPmiId(e.target.value.toUpperCase()), placeholder: "e.g. BATCH-042", style: { ...inpStyle, fontFamily: "'IBM Plex Mono',monospace" } })]),
+                React.createElement("div", { style: { marginBottom: 16 } }, [React.createElement("div", { style: lblStyle }, "Quantity *"), React.createElement("input", { type: "number", min: "1", value: pmiQty, onChange: e => setPmiQty(e.target.value), style: inpStyle })]),
+                React.createElement("button", { onClick: receivePMI, style: btnStyle(C.accent, C.ink) }, "Confirm Receipt into Shack")
+              ])
+            ]),
+            React.createElement("div", { style: { background: C.card, border: "1px solid " + C.border, borderRadius: 12, overflow: "hidden" } }, [
+              React.createElement(SectionHead, { icon: Truck, color: "#B23030", bg: "#FBEAEA", title: "Return Excess to PMI" }),
+              React.createElement("div", { style: { padding: 16 } }, [
+                React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", background: C.paper, borderRadius: 8, padding: "12px 14px", marginBottom: 14 } }, [
+                  React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, [React.createElement(Warehouse, { size: 16, color: C.muted }), React.createElement("span", { style: { color: C.muted, fontSize: 14 } }, "Units in your shack")]),
+                  React.createElement("span", { style: { fontSize: 28, fontWeight: 700 } }, (user && shack[user.building] ? shack[user.building].length : 0))
+                ]),
+                React.createElement("button", { onClick: () => returnPMI(user.building), style: { ...btnStyle("#FBEAEA", "#B23030"), border: "1px solid #F2C9C9" } }, "Return ALL Units to PMI")
+              ])
+            ])
+          ]),
+
+          screen === "shack" && React.createElement("div", { style: { display: "grid", gap: 14 } },
+            (user && user.building ? [user.building] : BUILDINGS).map(b =>
+              React.createElement("div", { key: b, style: { background: C.card, border: "1px solid " + C.border, borderRadius: 12, overflow: "hidden" } }, [
+                React.createElement(SectionHead, { icon: Warehouse, color: "#9A5E04", bg: C.accentSoft, title: b + " Print Shack", right: React.createElement("span", { style: { color: C.accent, fontSize: 26, fontWeight: 700 } }, (shack[b] || []).length) }),
+                React.createElement("div", { style: { maxHeight: 260, overflowY: "auto" } },
+                  (!shack[b] || shack[b].length === 0)
+                    ? React.createElement("div", { style: { padding: 28, textAlign: "center", color: C.muted } }, "Shack is empty")
+                    : shack[b].map((x, i) => React.createElement("div", { key: i, style: { padding: "10px 16px", borderBottom: i < shack[b].length - 1 ? "1px solid " + C.border : "none", display: "flex", justifyContent: "space-between" } }, [
+                        React.createElement("span", { style: { fontSize: 14 } }, x.srlId),
+                        React.createElement("span", { style: { color: C.muted, fontSize: 11 } }, x.ts)
+                      ]))
+                )
+              ])
+            )
+          ),
+
+          screen === "search" && React.createElement("div", {}, [
+            React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 14 } }, [
+              React.createElement("input", { value: q, onChange: e => setQ(e.target.value), onKeyDown: e => e.key === "Enter" && setResults(q ? inv.filter(x => x.srlId.toUpperCase().includes(q.toUpperCase())) : []), placeholder: "Search SRL ID...", style: { ...inpStyle, flex: 1, fontFamily: "'IBM Plex Mono',monospace" } }),
+              React.createElement("button", { onClick: () => setResults(q ? inv.filter(x => x.srlId.toUpperCase().includes(q.toUpperCase())) : []), style: { background: C.accent, color: C.ink, border: "none", borderRadius: 8, padding: "0 18px", fontWeight: 700 } }, "Search")
+            ]),
+            React.createElement("div", { style: { background: C.card, border: "1px solid " + C.border, borderRadius: 12, overflow: "hidden" } }, [
+              React.createElement(SectionHead, { icon: Search, color: "#6A45A8", bg: "#F1ECF9", title: "Movement History" }),
+              results.length === 0 
+                ? React.createElement("div", { style: { padding: 36, textAlign: "center", color: C.muted } }, "Enter an SRL ID and press Search")
+                : results.map((e, i) => React.createElement("div", { key: i, style: { padding: "14px 16px", borderBottom: i < results.length - 1 ? "1px solid " + C.border : "none" } }, [
+                    React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 } }, [
+                      React.createElement("span", { style: { fontWeight: 700, fontSize: 15 } }, e.srlId),
+                      React.createElement(Badge, { status: e.status })
+                    ]),
+                    React.createElement("div", { style: { color: C.muted, fontSize: 12 } }, e.building + " · " + e.level),
+                    React.createElement("div", { style: { color: C.muted, fontSize: 12 } }, e.by + " • " + e.ts)
+                  ]))
+            ])
+          ])
+        ]),
+
+        // Bottom tabs
+        React.createElement("div", { style: { position: "fixed", bottom: 0, left: 0, right: 0, background: C.ink, borderTop: "1px solid " + C.line, display: "flex", zIndex: 50 } },
+          tabs.map(t => {
+            const Ic = t.ic;
+            const active = screen === t.id;
+            return React.createElement("button", {
+              key: t.id,
+              onClick: () => setScreen(t.id),
+              style: { flex: 1, color: active ? C.accent : "#8A929C", background: "none", border: "none", padding: "10px 0 11px", fontSize: 10, fontWeight: 600, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }
+            }, [
+              React.createElement(Ic, { size: 21 }),
+              t.l
+            ]);
+          })
+        ),
+
+        toast && React.createElement("div", { style: { position: "fixed", bottom: 78, right: 16, background: C.card, border: "1px solid " + C.border, borderRadius: 12, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10, minWidth: 240, boxShadow: "0 4px 20px rgba(0,0,0,0.12)", zIndex: 99 } }, [
+          toast.k === "warn" ? React.createElement(X, { size: 17, color: "#D14343" }) : React.createElement(CheckCircle2, { size: 17, color: "#22A35A" }),
+          React.createElement("span", { style: { color: C.text, fontSize: 14 } }, toast.msg)
+        ])
+      ]);
+    }
+
+    // Render the app
+    try {
+      ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+    } catch (e) {
+      document.getElementById("root").innerHTML = `
+        <div style="padding:40px 20px; text-align:center; color:#fff; background:#16181D; min-height:100vh;">
+          <h2 style="margin-bottom:12px">Failed to start app</h2>
+          <p style="color:#7E8794; margin-bottom:20px">There was a problem loading the application.</p>
+          <button onclick="location.reload()" style="background:#E8910C; color:#16181D; border:none; padding:12px 24px; border-radius:8px; font-weight:700">Refresh Page</button>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
